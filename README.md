@@ -45,6 +45,21 @@ Current development includes:
 
 Some controls and screens still have developer-oriented UI and will be refined.
 
+## Protocol documentation
+
+Pocket 3 protocol research and implementation notes are included in:
+
+- [`docs/POCKET3_DUML_PROTOCOL.md`](docs/POCKET3_DUML_PROTOCOL.md) — BLE/Wi-Fi
+  connection, UDP/9004 transport, DUML framing, gimbal control, telemetry,
+  recording, live view, known unsafe commands, and open questions.
+- [`docs/CAMERA_SETTINGS_PROTOCOL.md`](docs/CAMERA_SETTINGS_PROTOCOL.md) —
+  camera-setting commands, captured option tables, named-property readback,
+  Timelapse, Motionlapse, Hyperlapse, Panorama, and related settings research.
+
+Shared machine-readable protocol regression vectors are in:
+
+`protocol/test-vectors/`
+
 ## Platforms
 
 ### iOS
