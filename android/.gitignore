@@ -1,0 +1,37 @@
+# Gradle-generated state and build outputs
+.gradle/
+**/build/
+
+# Machine-local Android SDK configuration
+local.properties
+
+# Android Studio / IntelliJ local files
+.idea/
+*.iml
+
+# Native build caches
+.cxx/
+.externalNativeBuild/
+
+# Packaged outputs and diagnostics
+*.apk
+*.aab
+*.ap_
+*.hprof
+captures/
+
+# Signing material and local signing configuration
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.der
+keystore.properties
+signing.properties
+
+# OS metadata
+.DS_Store
+Thumbs.db
