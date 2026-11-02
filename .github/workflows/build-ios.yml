@@ -1,0 +1,63 @@
+name: Build Kaze unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-ios.yml'
+      - 'ios/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest installed Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE_PATH="$(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' | sort -V | tail -n 1)"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+      - name: Build for iPhone
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/Pocket3Controller.xcodeproj \
+            -scheme Pocket3Controller \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log
+      - name: Package unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p package/Payload
+          cp -R build/Build/Products/Release-iphoneos/Pocket3Controller.app package/Payload/
+          test -f package/Payload/Pocket3Controller.app/Pocket3Controller
+          plutil -lint package/Payload/Pocket3Controller.app/Info.plist
+          cd package
+          zip -qry Kaze-for-DJI-unsigned.ipa Payload
+          shasum -a 256 Kaze-for-DJI-unsigned.ipa > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kaze-for-DJI-unsigned-IPA
+          path: |
+            package/Kaze-for-DJI-unsigned.ipa
+            package/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: build.log
