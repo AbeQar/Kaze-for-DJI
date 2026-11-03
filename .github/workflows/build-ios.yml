@@ -33,11 +33,12 @@ jobs:
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
+            CURRENT_PROJECT_VERSION=2 \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee build.log
-      - name: Test manual Wi-Fi connection lifecycle
+      - name: Test Wi-Fi lifecycle and head tracking response
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +48,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -derivedDataPath build-tests \
             -only-testing:Pocket3ControllerTests/Pocket3ManualWiFiTests \
+            -only-testing:Pocket3ControllerTests/HeadTrackingResponseTests \
             CODE_SIGNING_ALLOWED=NO test 2>&1 | tee test.log
       - name: Package unsigned IPA
         shell: bash
