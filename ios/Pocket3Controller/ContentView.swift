@@ -46,7 +46,8 @@ struct ContentView: View {
                         gamepad: gamepad,
                         headTracking: headTracking,
                         onConnectPocket: connectPocket,
-                        onDisconnectPocket: disconnectPocket
+                        onDisconnectPocket: disconnectPocket,
+                        onContinueManual: continueManualConnection
                     )
                     .tabItem {
                         Label("设备", systemImage: "gamecontroller")
@@ -88,6 +89,15 @@ struct ContentView: View {
                 .accessibilityLabel("关闭控制面板")
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            if wifi.needsManualJoin && !showControlPanel {
+                ManualWiFiConnectionView(wifi: wifi, onContinue: continueManualConnection, onCancel: disconnectPocket)
+                    .padding().background(.regularMaterial)
+            }
+        }
+        .onChange(of: gimbal.isConnected) { connected in
+            if connected { wifi.confirmManualControlConnection() }
+        }
         .onAppear {
             wireHeadTracking()
             wireGameController()
@@ -122,7 +132,11 @@ struct ContentView: View {
             // Mimo-like quick return: first give the existing UDP session a
             // chance to resume. If it does not produce fresh Pocket traffic
             // promptly, Pocket3GimbalSession tears it down and opens a new one.
-            gimbal.resumeFromBackground()
+            if wifi.needsManualJoin && pocketWorkflowActive {
+                continueManualConnection()
+            } else {
+                gimbal.resumeFromBackground()
+            }
 
         case .inactive:
             // Never leave a motion command latched while the app is no longer
@@ -254,11 +268,19 @@ struct ContentView: View {
         wifi.join(ssid: ssid, passphrase: password) { joined in
             guard token == pocketWorkflowGeneration, pocketWorkflowActive else { return }
             guard joined else {
+                if wifi.needsManualJoin { return }
                 pocketWorkflowActive = false
                 return
             }
             gimbal.connect()
         }
+    }
+
+    private func continueManualConnection() {
+        guard pocketWorkflowActive, ble.credentialsReady,
+              !gimbal.isBusy, !gimbal.isConnected else { return }
+        wifi.beginManualControlConnection()
+        gimbal.connect()
     }
 
     private func recoverAssociationAfterDatalinkFailure(
@@ -269,6 +291,11 @@ struct ContentView: View {
     ) {
         guard pocketWorkflowActive else { return }
         let token = pocketWorkflowGeneration
+        if wifi.isUsingManualNetwork {
+            wifi.note("Manual Wi-Fi control connection failed: \(message)")
+            wifi.waitForManualJoin(ssid: ble.ssid, password: ble.password)
+            return
+        }
 
         guard !associationRecoveryUsed else {
             pocketWorkflowActive = false
@@ -312,6 +339,29 @@ struct ContentView: View {
             }
         } else {
             leaveWiFi()
+        }
+    }
+}
+
+private struct ManualWiFiConnectionView: View {
+    @ObservedObject var wifi: Pocket3WiFiManager
+    let onContinue: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("手动连接 Pocket 3 Wi-Fi").font(.headline)
+            Text("打开 iPhone「设置 → Wi-Fi」，加入以下网络。即使提示无互联网连接，也请保持连接，然后返回 Kaze。")
+                .font(.subheadline)
+            Text("网络：\(wifi.manualSSID)").textSelection(.enabled)
+            Text("密码：\(wifi.manualPassword)").textSelection(.enabled)
+            HStack {
+                Button("复制密码") { UIPasteboard.general.string = wifi.manualPassword }
+                Button("已连接，继续", action: onContinue).buttonStyle(.borderedProminent)
+                Button("取消", action: onCancel)
+            }
+            Text("返回后会尝试控制握手；只有收到相机响应才会显示已连接。失败时可重新检查 Wi-Fi 后继续。")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 }
@@ -558,6 +608,7 @@ private struct DevicesScreen: View {
     @ObservedObject var headTracking: HeadTrackingManager
     let onConnectPocket: () -> Void
     let onDisconnectPocket: () -> Void
+    let onContinueManual: () -> Void
 
     var body: some View {
         CompatibleNavigationView {
@@ -578,7 +629,10 @@ private struct DevicesScreen: View {
 
                     if ble.credentialsReady {
                         CompatibleLabeledContent("相机 Wi-Fi 名称", value: ble.ssid)
-                        Text("应用会自动连接相机的临时 Wi-Fi，首次连接时请允许 iOS 弹出的加入网络请求。")
+                        if wifi.needsManualJoin {
+                            ManualWiFiConnectionView(wifi: wifi, onContinue: onContinueManual, onCancel: onDisconnectPocket)
+                        }
+                        Text("支持自动加入时会请求连接；个人签名可在系统设置中手动加入相机 Wi-Fi，再返回应用继续。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -2,14 +2,59 @@ import Combine
 import Foundation
 import NetworkExtension
 
-/// Owns the app-created Pocket 3 Wi-Fi configuration. The transport session is
-/// deliberately kept separate; ContentView coordinates Wi-Fi association before
-/// starting TCP/7001 and removes the configuration only after UDP has closed.
+/// Coordinates automatic association when provisioned, or a manual Settings join.
+/// ContentView establishes the UDP session separately; user-managed networks are
+/// never removed by the app.
 final class Pocket3WiFiManager: ObservableObject {
     @Published private(set) var status = "未加入网络"
     @Published private(set) var logText = ""
     @Published private(set) var isBusy = false
     @Published private(set) var isJoined = false
+
+    @Published private(set) var needsManualJoin = false
+    @Published private(set) var isUsingManualNetwork = false
+    @Published private(set) var manualSSID = ""
+    @Published private(set) var manualPassword = ""
+    private var ownsConfiguration = false
+
+    // Read the profile actually embedded by the sideload signer, not the source entitlements.
+    static var profileAllowsHotspotConfiguration: Bool {
+        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+              let data = try? Data(contentsOf: url),
+              let start = data.range(of: Data("<?xml".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(
+                from: data.subdata(in: start.lowerBound..<end.upperBound), options: [], format: nil
+              ) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any] else { return false }
+        return entitlements["com.apple.developer.networking.HotspotConfiguration"] as? Bool == true
+    }
+
+    func waitForManualJoin(ssid: String, password: String) {
+        generation &+= 1
+        isBusy = false
+        isJoined = false
+        isUsingManualNetwork = true
+        manualSSID = ssid
+        manualPassword = password
+        needsManualJoin = true
+        status = "请在系统设置中连接相机 Wi-Fi，然后返回继续"
+        log("Wi-Fi: waiting for manual association; SSID reading is not required")
+    }
+
+    func beginManualControlConnection() {
+        needsManualJoin = false
+        isBusy = false
+        isJoined = false
+        status = "正在验证相机控制连接…"
+    }
+
+    func confirmManualControlConnection() {
+        guard isUsingManualNetwork else { return }
+        isJoined = true
+        needsManualJoin = false
+        status = "已建立相机控制连接（手动 Wi-Fi）"
+    }
 
     private let manager = NEHotspotConfigurationManager.shared
     private var generation = 0
@@ -29,6 +74,15 @@ final class Pocket3WiFiManager: ObservableObject {
             return
         }
 
+        manualSSID = ssid
+        manualPassword = passphrase
+        if !Self.profileAllowsHotspotConfiguration || isUsingManualNetwork {
+            log("Wi-Fi: embedded profile HotspotConfiguration=\(Self.profileAllowsHotspotConfiguration)")
+            waitForManualJoin(ssid: ssid, password: passphrase)
+            completion(false)
+            return
+        }
+        needsManualJoin = false
         generation &+= 1
         let token = generation
         isBusy = true
@@ -56,6 +110,17 @@ final class Pocket3WiFiManager: ObservableObject {
         let token = generation
         let target = (ssid?.isEmpty == false ? ssid : nil) ?? associatedSSID
 
+        needsManualJoin = false
+        manualPassword = ""
+        if isUsingManualNetwork || !ownsConfiguration {
+            isUsingManualNetwork = false
+            associatedSSID = ""
+            isBusy = false
+            isJoined = false
+            status = "控制连接已断开；手动 Wi-Fi 请在系统设置中管理"
+            completion?()
+            return
+        }
         guard !target.isEmpty else {
             isBusy = false
             isJoined = false
@@ -109,21 +174,14 @@ final class Pocket3WiFiManager: ObservableObject {
                 guard let self, token == self.generation else { return }
 
                 if let error, !Self.isAlreadyAssociated(error) {
-                    self.finishJoinFailure(
-                        "无法加入 \(ssid)：\(error.localizedDescription)",
-                        completion: completion
-                    )
+                    self.log("Wi-Fi automatic join failed: \(error as NSError)")
+                    self.waitForManualJoin(ssid: ssid, password: passphrase)
+                    completion(false)
                     return
                 }
 
-                if let error, Self.isAlreadyAssociated(error), !wasManaged {
-                    self.finishJoinFailure(
-                        "\(ssid) 是从系统设置加入的网络。请在 Wi-Fi 设置中“忽略此网络”，再返回应用点击“连接 Pocket 3”。",
-                        completion: completion
-                    )
-                    return
-                }
-
+                self.ownsConfiguration = error == nil || wasManaged
+                self.isUsingManualNetwork = !self.ownsConfiguration
                 self.associatedSSID = ssid
                 self.isBusy = false
                 self.isJoined = true
@@ -180,6 +238,7 @@ final class Pocket3WiFiManager: ObservableObject {
         completion: (() -> Void)?
     ) {
         associatedSSID = ""
+        ownsConfiguration = false
         isBusy = false
         isJoined = false
         status = "未加入网络"
