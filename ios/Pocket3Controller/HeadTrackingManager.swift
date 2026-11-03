@@ -7,7 +7,7 @@ enum HeadTrackingManualSource: String, Hashable {
     case gamepad = "gamepad"
 }
 
-/// v0.6.3 full-authority head tracking with a symmetric yaw travel limit.
+/// v0.6.4 faster catch-up head tracking with a symmetric yaw travel limit.
 ///
 /// Safety model:
 /// - Head Tracking always starts OFF for a fresh app launch.
@@ -89,6 +89,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     private var recenterLastYawContinuousDegrees: Double?
     private var recenterStableSamples = 0
 
+    private var lastMotionAgeMs = 0.0
     private var lastConsoleLogUptime: TimeInterval = 0.0
     private let consoleLogInterval: TimeInterval = 0.20
 
@@ -103,8 +104,14 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     private static let controlNearZoneDegrees = 3.0
     private static let controlMinOffset = 30
     private static let controlNearGainPerDegree = 8.0
-    private static let controlFarBaseOffset = 48.0
-    private static let controlFarGainPerDegree = 10.0
+    // Keep the proven close-to-target curve and deadband unchanged. Increase
+    // catch-up authority only outside 3 degrees, with a continuous transition.
+    // The captured/physically verified 04/01 ceiling remains +/-550; those units
+    // are not calibrated degrees/second. Full authority now starts near 24 deg
+    // rather than 53 deg, which the head-only +/-45 deg target rarely reached.
+    private static let controlFarBaseOffset = Double(controlMinOffset) +
+        (controlNearZoneDegrees - controlDeadbandDegrees) * controlNearGainPerDegree
+    private static let controlFarGainPerDegree = 24.0
     private static let controlMaxOffset = JoystickMapper.mimoMaxOffset
     private static let neutral = 1024
 
@@ -364,10 +371,14 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
             let pitch = motion.attitude.pitch * radiansToDegrees
             let yaw = motion.attitude.yaw * radiansToDegrees
             let roll = motion.attitude.roll * radiansToDegrees
+            let motionTimestamp = motion.timestamp
 
             DispatchQueue.main.async {
                 guard self.isEnabled else { return }
 
+                // Diagnostic only: distinguish sample/main-queue delay from
+                // mechanical catch-up. Acquisition and control cadence are unchanged.
+                self.lastMotionAgeMs = max(0, (ProcessInfo.processInfo.systemUptime - motionTimestamp) * 1000)
                 self.isConnected = true
                 self.hasMotion = true
                 self.pitchDegrees = pitch
@@ -659,7 +670,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
 
             print(
                 String(
-                    format: "HEAD CONTROL #%llu rel[P=%+.1f Y=%+.1f R=%+.1f] gimbal[P=%+.1f Yc=%+.1f] target[P=%+.1f Yc=%+.1f] err[P=%+.1f Y=%+.1f] cmd[%@] override=%@",
+                    format: "HEAD CONTROL #%llu rel[P=%+.1f Y=%+.1f R=%+.1f] gimbal[P=%+.1f Yc=%+.1f] target[P=%+.1f Yc=%+.1f] err[P=%+.1f Y=%+.1f] cmd[%@] override=%@ sampleAgeMs=%.0f",
                     sampleCount,
                     relativePitchDegrees,
                     relativeYawDegrees,
@@ -671,7 +682,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
                     pitchError,
                     yawError,
                     commandText,
-                    manualOverrides.isEmpty ? "none" : manualOverrides.map(\.rawValue).sorted().joined(separator: "+")
+                    manualOverrides.isEmpty ? "none" : manualOverrides.map(\.rawValue).sorted().joined(separator: "+"),
+                    lastMotionAgeMs
                 )
             )
         } else if isCentered {
@@ -700,7 +712,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         }
     }
 
-    private static func controlAxisOffset(errorDegrees: Double) -> Int {
+    static func controlAxisOffset(errorDegrees: Double) -> Int {
+        guard errorDegrees.isFinite else { return 0 }
         let magnitude = abs(errorDegrees)
         if magnitude <= controlDeadbandDegrees { return 0 }
 
