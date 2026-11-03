@@ -208,9 +208,10 @@
 				};
 			};
 			buildConfigurationList = D31B7CF23028222100A0E797 /* Build configuration list for PBXProject "Pocket3Controller" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				"zh-Hans",
 				en,
 				Base,
 			);
@@ -422,9 +423,9 @@
 				INFOPLIST_FILE = Pocket3Controller/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connects to your DJI Osmo Pocket 3 over Bluetooth to establish the local control session.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Connects directly to your DJI Osmo Pocket 3 on the local Wi-Fi network for gimbal control.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "Uses AirPods motion data for head tracking when you turn Head Tracking on.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "通过蓝牙连接 DJI Osmo Pocket 3，以建立相机控制连接。";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "通过本地 Wi-Fi 直接连接 DJI Osmo Pocket 3，以控制云台并显示实时画面。";
+				INFOPLIST_KEY_NSMotionUsageDescription = "开启头部追踪后，读取 AirPods 运动数据以控制 Pocket 3 云台。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -461,9 +462,9 @@
 				INFOPLIST_FILE = Pocket3Controller/Info.plist;
 				INFOPLIST_KEY_GCSupportsControllerUserInteraction = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connects to your DJI Osmo Pocket 3 over Bluetooth to establish the local control session.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Connects directly to your DJI Osmo Pocket 3 on the local Wi-Fi network for gimbal control.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "Uses AirPods motion data for head tracking when you turn Head Tracking on.";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "通过蓝牙连接 DJI Osmo Pocket 3，以建立相机控制连接。";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "通过本地 Wi-Fi 直接连接 DJI Osmo Pocket 3，以控制云台并显示实时画面。";
+				INFOPLIST_KEY_NSMotionUsageDescription = "开启头部追踪后，读取 AirPods 运动数据以控制 Pocket 3 云台。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
