@@ -10,20 +10,20 @@ enum GamepadStickLayout: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .leftCombined: return "Left Stick"
-        case .rightCombined: return "Right Stick"
-        case .split: return "Split Sticks"
+        case .leftCombined: return "左摇杆"
+        case .rightCombined: return "右摇杆"
+        case .split: return "双摇杆分工"
         }
     }
 
     var subtitle: String {
         switch self {
         case .leftCombined:
-            return "Left stick controls pitch + yaw"
+            return "左摇杆控制俯仰和水平"
         case .rightCombined:
-            return "Right stick controls pitch + yaw"
+            return "右摇杆控制俯仰和水平"
         case .split:
-            return "Left up/down = pitch, right left/right = yaw"
+            return "左摇杆上下控制俯仰，右摇杆左右控制水平"
         }
     }
 }

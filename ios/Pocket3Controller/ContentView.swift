@@ -36,7 +36,7 @@ struct ContentView: View {
                         headTracking: headTracking
                     )
                     .tabItem {
-                        Label("Legacy Control", systemImage: "dot.scope")
+                        Label("云台控制", systemImage: "dot.scope")
                     }
 
                     DevicesScreen(
@@ -49,7 +49,7 @@ struct ContentView: View {
                         onDisconnectPocket: disconnectPocket
                     )
                     .tabItem {
-                        Label("Devices", systemImage: "gamecontroller")
+                        Label("设备", systemImage: "gamecontroller")
                     }
 
                     SettingsScreen(
@@ -58,7 +58,7 @@ struct ContentView: View {
                         gimbal: gimbal
                     )
                     .tabItem {
-                        Label("Settings", systemImage: "gearshape")
+                        Label("设置", systemImage: "gearshape")
                     }
 
                     DiagnosticsScreen(
@@ -69,14 +69,14 @@ struct ContentView: View {
                         headTracking: headTracking
                     )
                     .tabItem {
-                        Label("Diagnostics", systemImage: "waveform.path.ecg")
+                        Label("诊断", systemImage: "waveform.path.ecg")
                     }
                 }
 
                 Button {
                     showControlPanel = false
                 } label: {
-                    Label("Close", systemImage: "xmark.circle.fill")
+                    Label("关闭", systemImage: "xmark.circle.fill")
                         .font(.callout.weight(.semibold))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
@@ -85,7 +85,7 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .padding(.top, 8)
                 .padding(.trailing, 10)
-                .accessibilityLabel("Close control panel")
+                .accessibilityLabel("关闭控制面板")
             }
         }
         .onAppear {
@@ -306,7 +306,7 @@ struct ContentView: View {
         }
 
         if gimbal.isConnected || gimbal.isBusy {
-            headTracking.invalidateControlCenter(reason: "Pocket 3 disconnected")
+            headTracking.invalidateControlCenter(reason: "Pocket 3 已断开")
             gimbal.disconnect {
                 DispatchQueue.main.async(execute: leaveWiFi)
             }
@@ -383,7 +383,7 @@ private struct ControlScreen: View {
                     portraitContent
                 }
             }
-            .navigationTitle("Pocket 3 Controller")
+            .navigationTitle("Pocket 3 控制器")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -426,7 +426,7 @@ private struct ControlScreen: View {
 
     private var telemetryCard: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("Gimbal")
+            Text("云台")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(gimbal.telemetryText)
@@ -442,11 +442,11 @@ private struct ControlScreen: View {
     private var inputRow: some View {
         HStack {
             if headTracking.isEnabled && headTracking.isCentered && !headTracking.isManualOverrideActive {
-                Label("Input: Head Tracking", systemImage: "airpodspro")
+                Label("输入：头部追踪", systemImage: "airpodspro")
                     .font(.subheadline.weight(.semibold))
             } else {
                 Label(
-                    "Input: \(gamepad.lastInputSource.rawValue)",
+                    "输入：\(gamepad.lastInputSource.rawValue)",
                     systemImage: gamepad.lastInputSource == .gamepad ? "gamecontroller.fill" : "hand.tap.fill"
                 )
                 .font(.subheadline.weight(.semibold))
@@ -454,7 +454,7 @@ private struct ControlScreen: View {
 
             Spacer()
 
-            Text(preferences.responseMode == .linear ? "Linear" : "Progressive")
+            Text(preferences.responseMode == .linear ? "线性" : "渐进")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -489,7 +489,7 @@ private struct ControlScreen: View {
     private var actionButtons: some View {
         VStack(spacing: 9) {
             HStack(spacing: 8) {
-                Button("Recenter") {
+                Button("回中") {
                     touchPitch = JoystickMapper.neutral
                     touchYaw = JoystickMapper.neutral
                     headTracking.prepareForRecenterAutoResume(reason: "Touchscreen recenter")
@@ -499,14 +499,14 @@ private struct ControlScreen: View {
                 .disabled(!gimbal.isConnected)
                 .frame(maxWidth: .infinity)
 
-                Button("Set Center") {
+                Button("设置中心") {
                     _ = gimbal.captureCenter()
                 }
                 .buttonStyle(.bordered)
                 .disabled(!gimbal.canCaptureCenter)
                 .frame(maxWidth: .infinity)
 
-                Button("Stop") {
+                Button("停止") {
                     touchPitch = JoystickMapper.neutral
                     touchYaw = JoystickMapper.neutral
                     headTracking.invalidateControlCenter(reason: "Touchscreen STOP")
@@ -518,7 +518,7 @@ private struct ControlScreen: View {
                 .frame(maxWidth: .infinity)
             }
 
-            Button(gimbal.smoothRecenterRunning ? "Returning to Center…" : "Return to Center") {
+            Button(gimbal.smoothRecenterRunning ? "正在返回中心…" : "返回中心") {
                 touchPitch = JoystickMapper.neutral
                 touchYaw = JoystickMapper.neutral
                 headTracking.invalidateControlCenter(reason: "Touchscreen smooth recenter")
@@ -536,13 +536,13 @@ private struct ControlScreen: View {
                 .fill(gimbal.isConnected ? Color.green : Color.secondary)
                 .frame(width: 9, height: 9)
 
-            Text(gimbal.isConnected ? "Pocket 3 Connected" : "Pocket 3 Disconnected")
+            Text(gimbal.isConnected ? "Pocket 3 已连接" : "Pocket 3 未连接")
                 .font(.subheadline.weight(.semibold))
 
             Spacer()
 
             if gamepad.isConnected {
-                Label("Controller", systemImage: "gamecontroller.fill")
+                Label("控制器", systemImage: "gamecontroller.fill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -563,36 +563,36 @@ private struct DevicesScreen: View {
         CompatibleNavigationView {
             List {
                 Section("Pocket 3") {
-                    CompatibleLabeledContent("Bluetooth", value: ble.status)
+                    CompatibleLabeledContent("蓝牙", value: ble.status)
                     CompatibleLabeledContent("Wi-Fi", value: wifi.status)
-                    CompatibleLabeledContent("Control link", value: gimbal.isConnected ? "Connected" : "Disconnected")
+                    CompatibleLabeledContent("控制连接", value: gimbal.isConnected ? "已连接" : "未连接")
 
                     Button(
                         (ble.isBusy || wifi.isBusy || gimbal.isBusy)
-                            ? "Connecting Pocket 3…"
-                            : "Connect Pocket 3"
+                            ? "正在连接 Pocket 3…"
+                            : "连接 Pocket 3"
                     ) {
                         onConnectPocket()
                     }
                     .disabled(ble.isBusy || wifi.isBusy || gimbal.isBusy || gimbal.isConnected)
 
                     if ble.credentialsReady {
-                        CompatibleLabeledContent("Pocket SSID", value: ble.ssid)
-                        Text("The app now manages this temporary accessory network. The first join requires the iOS confirmation prompt.")
+                        CompatibleLabeledContent("相机 Wi-Fi 名称", value: ble.ssid)
+                        Text("应用会自动连接相机的临时 Wi-Fi，首次连接时请允许 iOS 弹出的加入网络请求。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
 
                     if ble.isConnected || ble.isBusy || wifi.isJoined || wifi.isBusy || gimbal.isConnected || gimbal.isBusy {
-                        Button("Disconnect Pocket 3", role: .destructive) {
+                        Button("断开 Pocket 3", role: .destructive) {
                             onDisconnectPocket()
                         }
                     }
                 }
 
-                Section("Head Tracking — LIVE v0.6.3 SYMMETRIC YAW") {
+                Section("头部追踪 · v0.6.3 · 水平范围 ±45°") {
                     Toggle(
-                        "Head Tracking",
+                        "头部追踪",
                         isOn: Binding(
                             get: { headTracking.isEnabled },
                             set: { enabled in
@@ -605,63 +605,63 @@ private struct DevicesScreen: View {
                         )
                     )
 
-                    CompatibleLabeledContent("Status", value: headTracking.statusText)
-                    CompatibleLabeledContent("Authorization", value: headTracking.authorizationText)
+                    CompatibleLabeledContent("状态", value: headTracking.statusText)
+                    CompatibleLabeledContent("运动权限", value: headTracking.authorizationText)
 
                     if headTracking.isEnabled {
-                        Button(headTracking.isCentered ? "Set Head Center Again" : "Set Head Center — ARM LIVE CONTROL") {
+                        Button(headTracking.isCentered ? "重新设置头部中心" : "设置头部中心并启动头追") {
                             _ = headTracking.captureCenter()
                         }
                         .disabled(!headTracking.hasMotion || !gimbal.isConnected)
 
-                        CompatibleLabeledContent("Control", value: headTracking.controlText)
-                        CompatibleLabeledContent("Command", value: headTracking.commandText)
-                        CompatibleLabeledContent("Manual override", value: headTracking.isManualOverrideActive ? "Active" : "None")
+                        CompatibleLabeledContent("控制状态", value: headTracking.controlText)
+                        CompatibleLabeledContent("控制指令", value: headTracking.commandText)
+                        CompatibleLabeledContent("手动接管", value: headTracking.isManualOverrideActive ? "正在接管" : "无")
 
                         if headTracking.isCentered {
-                            CompatibleLabeledContent("Relative Pitch", value: headTracking.relativePitchText)
-                            CompatibleLabeledContent("Relative Yaw", value: headTracking.relativeYawText)
-                            CompatibleLabeledContent("Relative Roll", value: headTracking.relativeRollText)
+                            CompatibleLabeledContent("相对俯仰角", value: headTracking.relativePitchText)
+                            CompatibleLabeledContent("相对水平角", value: headTracking.relativeYawText)
+                            CompatibleLabeledContent("相对横滚角", value: headTracking.relativeRollText)
                         }
 
-                        DisclosureGroup("Raw AirPods Attitude") {
-                            CompatibleLabeledContent("Raw Pitch", value: headTracking.pitchText)
-                            CompatibleLabeledContent("Raw Yaw", value: headTracking.yawText)
-                            CompatibleLabeledContent("Raw Roll", value: headTracking.rollText)
-                            CompatibleLabeledContent("Continuous Yaw", value: headTracking.continuousYawText)
+                        DisclosureGroup("AirPods 原始姿态") {
+                            CompatibleLabeledContent("原始俯仰角", value: headTracking.pitchText)
+                            CompatibleLabeledContent("原始水平角", value: headTracking.yawText)
+                            CompatibleLabeledContent("原始横滚角", value: headTracking.rollText)
+                            CompatibleLabeledContent("连续水平角", value: headTracking.continuousYawText)
                         }
 
-                        CompatibleLabeledContent("Samples", value: "\(headTracking.sampleCount)")
+                        CompatibleLabeledContent("采样数", value: "\(headTracking.sampleCount)")
                     }
 
-                    Text("Head Tracking still starts disarmed and requires Set Head Center. v0.6.3 keeps the full ±550 04/01 command authority and unrestricted pitch target from v0.6.2, but head-tracking yaw is now capped symmetrically at ±45° around the current head-control baseline. This keeps the long/right side from rotating much farther than the Pocket 3 can rotate on its short/left side. Touch and gamepad remain unrestricted by this head-only yaw limit. Manual override/rebase and RECENTER auto-resume are unchanged.")
+                    Text("开启后请正视前方，点击“设置头部中心并启动头追”。水平跟随范围为中心左右各 45°，俯仰目标不额外限制。触屏和手柄不受此水平范围限制；手动操作结束或云台回中后，头追会自动重新校准并恢复。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Game Controller") {
-                    CompatibleLabeledContent("Status", value: gamepad.isConnected ? "Connected" : "Not Connected")
+                Section("游戏手柄") {
+                    CompatibleLabeledContent("状态", value: gamepad.isConnected ? "已连接" : "未连接")
                     if gamepad.isConnected {
-                        CompatibleLabeledContent("Controller", value: gamepad.controllerName)
+                        CompatibleLabeledContent("控制器", value: gamepad.controllerName)
                         if !gamepad.controllerCategory.isEmpty {
-                            CompatibleLabeledContent("Profile", value: gamepad.controllerCategory)
+                            CompatibleLabeledContent("配置类型", value: gamepad.controllerCategory)
                         }
                     }
                     Text(gamepad.statusText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Button(gamepad.isDiscovering ? "Looking for Controllers…" : "Find Controllers") {
+                    Button(gamepad.isDiscovering ? "正在查找手柄…" : "查找手柄") {
                         gamepad.discoverControllers()
                     }
                     .disabled(gamepad.isDiscovering)
 
-                    Text("The controller must expose Apple's Extended Gamepad profile. Pair Bluetooth controllers with the iPhone normally; this app then receives them through Game Controller.")
+                    Text("请先在 iPhone 蓝牙设置中配对手柄。应用支持符合 Apple 扩展游戏手柄规范的控制器。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Devices")
+            .navigationTitle("设备")
         }
     }
 }
@@ -674,7 +674,7 @@ private struct SettingsScreen: View {
     var body: some View {
         CompatibleNavigationView {
             Form {
-                Section("Stick Layout") {
+                Section("摇杆布局") {
                     ForEach(GamepadStickLayout.allCases) { layout in
                         Button {
                             preferences.stickLayout = layout
@@ -696,39 +696,39 @@ private struct SettingsScreen: View {
                     }
                 }
 
-                Section("Axes") {
-                    Toggle("Invert Pitch", isOn: $preferences.invertPitch)
-                    Toggle("Invert Yaw", isOn: $preferences.invertYaw)
+                Section("控制方向") {
+                    Toggle("反转俯仰方向", isOn: $preferences.invertPitch)
+                    Toggle("反转水平方向", isOn: $preferences.invertYaw)
                 }
 
-                Section("Response") {
-                    Picker("Response", selection: $preferences.responseMode) {
-                        Text("Linear").tag(JoystickResponseMode.linear)
-                        Text("Progressive").tag(JoystickResponseMode.progressive)
+                Section("响应曲线") {
+                    Picker("响应曲线", selection: $preferences.responseMode) {
+                        Text("线性").tag(JoystickResponseMode.linear)
+                        Text("渐进").tag(JoystickResponseMode.progressive)
                     }
                     .pickerStyle(.segmented)
-                    Text("The same response setting is used by both the touchscreen joystick and the physical controller.")
+                    Text("触屏摇杆和实体手柄共用此响应曲线。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Controller Buttons") {
-                    CompatibleLabeledContent("A / Cross", value: "Recenter")
-                    CompatibleLabeledContent("B / Circle", value: "Stop / Neutral")
-                    CompatibleLabeledContent("X / Square", value: "Set Center")
-                    CompatibleLabeledContent("Y / Triangle", value: "Return to Center")
+                Section("手柄按键") {
+                    CompatibleLabeledContent("A / 叉键", value: "回中")
+                    CompatibleLabeledContent("B / 圆圈键", value: "停止 / 归零")
+                    CompatibleLabeledContent("X / 方块键", value: "设置中心")
+                    CompatibleLabeledContent("Y / 三角键", value: "返回中心")
                 }
 
                 Section {
                     Text(preferences.stickLayout.subtitle)
                     if gamepad.isConnected {
-                        Text("Connected: \(gamepad.controllerName)")
+                        Text("已连接：\(gamepad.controllerName)")
                     }
                 } footer: {
-                    Text("Settings are saved automatically and restored on the next launch.")
+                    Text("设置会自动保存，下次打开时恢复。")
                 }
             }
-            .navigationTitle("Controller Settings")
+            .navigationTitle("控制器设置")
         }
     }
 }
@@ -743,18 +743,18 @@ private struct DiagnosticsScreen: View {
     var body: some View {
         CompatibleNavigationView {
             List {
-                Section("Status") {
-                    CompatibleLabeledContent("Datalink", value: gimbal.status)
-                    CompatibleLabeledContent("Pocket Wi-Fi", value: wifi.status)
-                    CompatibleLabeledContent("Game Controller", value: gamepad.statusText)
-                    CompatibleLabeledContent("Head Tracking", value: headTracking.statusText)
+                Section("状态") {
+                    CompatibleLabeledContent("数据连接", value: gimbal.status)
+                    CompatibleLabeledContent("相机 Wi-Fi", value: wifi.status)
+                    CompatibleLabeledContent("游戏手柄", value: gamepad.statusText)
+                    CompatibleLabeledContent("头部追踪", value: headTracking.statusText)
                     if headTracking.isEnabled {
-                        Text("Head control: \(headTracking.controlText)  cmd=\(headTracking.commandText) override=\(headTracking.isManualOverrideActive ? "yes" : "no")")
+                        Text("头追：\(headTracking.controlText) 指令=\(headTracking.commandText) 手动接管=\(headTracking.isManualOverrideActive ? "是" : "否")")
                             .font(.system(.caption, design: .monospaced))
-                        Text("AirPods raw: P=\(headTracking.pitchText) Y=\(headTracking.yawText) R=\(headTracking.rollText) Ycont=\(headTracking.continuousYawText) samples=\(headTracking.sampleCount)")
+                        Text("AirPods 原始姿态：俯仰=\(headTracking.pitchText) Y=\(headTracking.yawText) R=\(headTracking.rollText) Ycont=\(headTracking.continuousYawText) 采样数=\(headTracking.sampleCount)")
                             .font(.system(.caption, design: .monospaced))
                         if headTracking.isCentered {
-                            Text("AirPods relative: P=\(headTracking.relativePitchText) Y=\(headTracking.relativeYawText) R=\(headTracking.relativeRollText)")
+                            Text("AirPods 相对姿态：俯仰=\(headTracking.relativePitchText) Y=\(headTracking.relativeYawText) R=\(headTracking.relativeRollText)")
                                 .font(.system(.caption, design: .monospaced))
                         }
                     }
@@ -765,60 +765,60 @@ private struct DiagnosticsScreen: View {
                 }
 
                 Section {
-                    Button("New Test") {
+                    Button("开始新测试") {
                         gimbal.beginDiagnosticTest()
                         ble.beginDiagnosticTest()
                         wifi.clearLog()
                         wifi.note("=== NEW DIAGNOSTIC TEST ===")
                     }
-                    Button("Clear All Logs", role: .destructive) {
+                    Button("清空全部日志", role: .destructive) {
                         gimbal.clearLog()
                         ble.clearLog()
                         wifi.clearLog()
                     }
                 } header: {
-                    Text("Log Controls")
+                    Text("日志操作")
                 } footer: {
-                    Text("New Test clears all three logs and inserts a fresh test marker without disconnecting the Pocket 3.")
+                    Text("新测试会清空三类日志并插入测试标记，相机保持连接。")
                 }
 
-                Section("Datalink Log") {
-                    Button("Copy Datalink Log") {
+                Section("数据连接日志") {
+                    Button("复制数据连接日志") {
                         UIPasteboard.general.string = gimbal.logText
                     }
-                    Button("Clear Datalink Log", role: .destructive) {
+                    Button("清空数据连接日志", role: .destructive) {
                         gimbal.clearLog()
                     }
-                    Text(gimbal.logText.isEmpty ? "No datalink log yet." : gimbal.logText)
+                    Text(gimbal.logText.isEmpty ? "暂无数据连接日志。" : gimbal.logText)
                         .font(.system(size: 9.5, design: .monospaced))
                         .textSelection(.enabled)
                 }
 
-                Section("Bluetooth Log") {
-                    Button("Copy Bluetooth Log") {
+                Section("蓝牙日志") {
+                    Button("复制蓝牙日志") {
                         UIPasteboard.general.string = ble.logText
                     }
-                    Button("Clear Bluetooth Log", role: .destructive) {
+                    Button("清空蓝牙日志", role: .destructive) {
                         ble.clearLog()
                     }
-                    Text(ble.logText.isEmpty ? "No Bluetooth log yet." : ble.logText)
+                    Text(ble.logText.isEmpty ? "暂无蓝牙日志。" : ble.logText)
                         .font(.system(size: 9.5, design: .monospaced))
                         .textSelection(.enabled)
                 }
 
-                Section("Wi-Fi Log") {
-                    Button("Copy Wi-Fi Log") {
+                Section("Wi-Fi 日志") {
+                    Button("复制 Wi-Fi 日志") {
                         UIPasteboard.general.string = wifi.logText
                     }
-                    Button("Clear Wi-Fi Log", role: .destructive) {
+                    Button("清空 Wi-Fi 日志", role: .destructive) {
                         wifi.clearLog()
                     }
-                    Text(wifi.logText.isEmpty ? "No Wi-Fi log yet." : wifi.logText)
+                    Text(wifi.logText.isEmpty ? "暂无 Wi-Fi 日志。" : wifi.logText)
                         .font(.system(size: 9.5, design: .monospaced))
                         .textSelection(.enabled)
                 }
             }
-            .navigationTitle("Diagnostics")
+            .navigationTitle("诊断")
         }
     }
 }

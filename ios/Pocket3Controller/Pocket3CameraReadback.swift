@@ -29,27 +29,27 @@ enum Pocket3CameraShootingMode: UInt8, CaseIterable, Equatable {
 
     var displayName: String {
         switch self {
-        case .slowMotion: return "Slow Motion"
-        case .video: return "Video"
-        case .timelapse: return "Timelapse"
-        case .photo: return "Photo"
-        case .hyperlapse: return "Hyperlapse"
-        case .panorama: return "Panorama"
-        case .motionlapse: return "Motionlapse"
-        case .lowLight: return "Low-Light"
+        case .slowMotion: return "慢动作"
+        case .video: return "录像"
+        case .timelapse: return "静态延时"
+        case .photo: return "拍照"
+        case .hyperlapse: return "运动延时"
+        case .panorama: return "全景拍照"
+        case .motionlapse: return "轨迹延时"
+        case .lowLight: return "低光"
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .slowMotion: return "SLO-MO"
-        case .video: return "VIDEO"
-        case .timelapse: return "T-LAPSE"
-        case .photo: return "PHOTO"
-        case .hyperlapse: return "HYPER"
-        case .panorama: return "PANO"
-        case .motionlapse: return "M-LAPSE"
-        case .lowLight: return "LOW-LIGHT"
+        case .slowMotion: return "慢动作"
+        case .video: return "录像"
+        case .timelapse: return "静态延时"
+        case .photo: return "拍照"
+        case .hyperlapse: return "运动延时"
+        case .panorama: return "全景"
+        case .motionlapse: return "轨迹延时"
+        case .lowLight: return "低光"
         }
     }
 }
@@ -65,7 +65,7 @@ enum Pocket3WhiteBalanceReadback: Equatable {
 /// - 0x00 = Landscape
 /// - 0x01 = Portrait / vertical
 ///
-/// Pocket "Auto" is a policy, not a third value here: while Auto was selected with the
+/// Pocket "自动" is a policy, not a third value here: while Auto was selected with the
 /// Pocket physically vertical, this property continued to report 0x01.
 enum Pocket3SensorAspectRatio: UInt8, Equatable {
     case landscape = 0x00
@@ -73,8 +73,8 @@ enum Pocket3SensorAspectRatio: UInt8, Equatable {
 
     var displayName: String {
         switch self {
-        case .landscape: return "Landscape"
-        case .portrait: return "Portrait"
+        case .landscape: return "横屏"
+        case .portrait: return "竖屏"
         }
     }
 }

@@ -101,11 +101,11 @@ enum Pocket3CameraStatus {
 
     static func recordingDescription(statusByte: UInt8) -> String {
         switch statusByte {
-        case 0x01: return "IDLE"
-        case 0x41: return "TRANSITION"
-        case 0xC1: return "TRANSITION+REC"
-        case 0x81: return "RECORDING"
-        default: return "UNKNOWN"
+        case 0x01: return "待机"
+        case 0x41: return "切换中"
+        case 0xC1: return "切换并录像中"
+        case 0x81: return "录像中"
+        default: return "未知"
         }
     }
 

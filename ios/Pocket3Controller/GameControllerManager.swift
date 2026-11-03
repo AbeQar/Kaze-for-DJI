@@ -4,8 +4,8 @@ import CoreGraphics
 import Combine
 
 enum ControlInputSource: String {
-    case touch = "Touch"
-    case gamepad = "Gamepad"
+    case touch = "触屏"
+    case gamepad = "手柄"
 }
 
 struct GamepadMappedInput: Equatable {
@@ -75,9 +75,9 @@ enum GamepadInputMapper {
 
 final class GameControllerManager: NSObject, ObservableObject {
     @Published private(set) var isConnected = false
-    @Published private(set) var controllerName = "No controller connected"
+    @Published private(set) var controllerName = "未连接手柄"
     @Published private(set) var controllerCategory = ""
-    @Published private(set) var statusText = "No game controller connected"
+    @Published private(set) var statusText = "未连接游戏手柄"
     @Published private(set) var lastInputSource: ControlInputSource = .touch
     @Published private(set) var isDiscovering = false
 
@@ -163,7 +163,7 @@ final class GameControllerManager: NSObject, ObservableObject {
         discoveryGeneration &+= 1
         let generation = discoveryGeneration
         isDiscovering = true
-        statusText = "Looking for controllers…"
+        statusText = "正在查找手柄…"
 
         GCController.startWirelessControllerDiscovery { [weak self] in
             DispatchQueue.main.async {
@@ -180,7 +180,7 @@ final class GameControllerManager: NSObject, ObservableObject {
             self.isDiscovering = false
             self.refreshConnectedControllers()
             if !self.isConnected {
-                self.statusText = "No controller found — pair it in iPhone Bluetooth settings, then try again"
+                self.statusText = "未找到手柄，请先在 iPhone 蓝牙设置中配对后重试"
             }
         }
     }
@@ -198,10 +198,10 @@ final class GameControllerManager: NSObject, ObservableObject {
 
         if activeController == nil {
             isConnected = false
-            controllerName = "No controller connected"
+            controllerName = "未连接手柄"
             controllerCategory = ""
             if !isDiscovering {
-                statusText = "No game controller connected"
+                statusText = "未连接游戏手柄"
             }
         }
     }
@@ -258,7 +258,7 @@ final class GameControllerManager: NSObject, ObservableObject {
         GCController.stopWirelessControllerDiscovery()
         discoveryGeneration &+= 1
         publishControllerIdentity(controller)
-        statusText = "Controller ready"
+        statusText = "手柄已就绪"
 
         gamepad.valueChangedHandler = { [weak self] profile, _ in
             self?.handleStickState(profile)
@@ -344,7 +344,7 @@ final class GameControllerManager: NSObject, ObservableObject {
         }
 
         detachController(sendNeutralIfOwned: true)
-        statusText = "Controller disconnected"
+        statusText = "手柄已断开"
         refreshConnectedControllers()
     }
 
@@ -375,7 +375,7 @@ final class GameControllerManager: NSObject, ObservableObject {
 
         activeController = nil
         isConnected = false
-        controllerName = "No controller connected"
+        controllerName = "未连接手柄"
         controllerCategory = ""
     }
 

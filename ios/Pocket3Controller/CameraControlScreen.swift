@@ -23,15 +23,15 @@ private enum CameraSettingsDestination: Equatable {
     var title: String {
         switch self {
         case .video:
-            return "Current Mode"
+            return "当前模式"
         case .whiteBalance:
-            return "White Balance"
+            return "白平衡"
         case .exposure:
-            return "Exposure Compensation"
+            return "曝光补偿"
         case .focus:
-            return "Focus"
+            return "对焦"
         case .camera:
-            return "Camera Settings"
+            return "相机设置"
         }
     }
 }
@@ -46,19 +46,19 @@ struct CameraConnectionPresentation: Equatable {
     static func make(isConnected: Bool, connectedCameraDisplayName: String?) -> Self {
         guard isConnected, let name = connectedCameraDisplayName else {
             return Self(
-                topLabel: "Cameras",
-                title: "Cameras",
+                topLabel: "相机",
+                title: "相机",
                 deviceName: nil,
-                status: "No camera connected",
-                actionTitle: "Connect Camera"
+                status: "未连接相机",
+                actionTitle: "连接相机"
             )
         }
         return Self(
             topLabel: name,
-            title: "Cameras",
+            title: "相机",
             deviceName: name,
-            status: "Connected",
-            actionTitle: "Disconnect"
+            status: "已连接",
+            actionTitle: "断开连接"
         )
     }
 }
@@ -154,9 +154,9 @@ struct CameraControlScreen: View {
             return mode.displayName
         }
         if let raw = cameraState.shootingModeRawValue {
-            return String(format: "Unknown (0x%02X)", raw)
+            return String(format: "未知（0x%02X）", raw)
         }
-        return gimbal.isConnected ? "Waiting for mode readback" : "Disconnected"
+        return gimbal.isConnected ? "等待相机模式" : "未连接"
     }
 
     private var currentVideoValue: String {
@@ -185,7 +185,7 @@ struct CameraControlScreen: View {
 
     private var currentWhiteBalanceValue: String {
         switch cameraReadback.whiteBalance {
-        case .auto?: return "AUTO"
+        case .auto?: return "自动"
         case .customKelvin(let kelvin)?: return "\(kelvin)K"
         case nil: return lastSentWhiteBalance
         }
@@ -216,7 +216,7 @@ struct CameraControlScreen: View {
 
     private var currentColorValue: String {
         switch cameraReadback.colorProfile {
-        case .normal?: return "Normal"
+        case .normal?: return "普通"
         case .hlg?: return "HLG"
         case .dLogM?: return "D-Log M"
         case nil: return lastSentColor
@@ -225,8 +225,8 @@ struct CameraControlScreen: View {
 
     private var currentExposureModeValue: String {
         switch cameraReadback.exposureMode {
-        case .auto?: return "AUTO"
-        case .manual?: return "MANUAL"
+        case .auto?: return "自动"
+        case .manual?: return "手动"
         case nil: return lastSentExposureMode
         }
     }
@@ -249,7 +249,7 @@ struct CameraControlScreen: View {
 
     private var currentPhotoCountdownValue: String {
         switch cameraReadback.photoCountdown {
-        case .off?: return "OFF"
+        case .off?: return "关"
         case .seconds3?: return "3s"
         case .seconds5?: return "5s"
         case .seconds7?: return "7s"
@@ -446,7 +446,7 @@ struct CameraControlScreen: View {
 
             HStack(spacing: 2) {
                 CameraActionButton(
-                    title: gimbal.isGimbalLocked ? "Unlock" : "Lock",
+                    title: gimbal.isGimbalLocked ? "解锁" : "锁定",
                     systemImage: gimbal.isGimbalLocked ? "lock.fill" : "lock.open",
                     enabled: gimbal.isConnected
                 ) {
@@ -455,7 +455,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: "Recenter",
+                    title: "回中",
                     systemImage: "scope",
                     enabled: gimbal.isConnected
                 ) {
@@ -465,7 +465,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: "Mark",
+                    title: "标记",
                     systemImage: hasMarkedPosition ? "bookmark.fill" : "bookmark",
                     enabled: gimbal.canCaptureCenter
                 ) {
@@ -475,7 +475,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: gimbal.smoothRecenterRunning ? "Returning" : "Return",
+                    title: gimbal.smoothRecenterRunning ? "返回中" : "返回",
                     systemImage: "arrow.uturn.backward",
                     enabled: gimbal.canSmoothRecenter && !gimbal.smoothRecenterRunning
                 ) {
@@ -515,7 +515,7 @@ struct CameraControlScreen: View {
     private var landscapeGimbalControls: some View {
         switch joystickLayout {
         case .left:
-            CameraCombinedJoystick(label: "PAN / TILT", enabled: gimbal.isConnected) { yaw, pitch, active in
+            CameraCombinedJoystick(label: "水平 / 俯仰", enabled: gimbal.isConnected) { yaw, pitch, active in
                 updateCombinedTouch(yaw: yaw, pitch: pitch, active: active)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
@@ -523,7 +523,7 @@ struct CameraControlScreen: View {
             .padding(.bottom, 66)
 
         case .right:
-            CameraCombinedJoystick(label: "PAN / TILT", enabled: gimbal.isConnected) { yaw, pitch, active in
+            CameraCombinedJoystick(label: "水平 / 俯仰", enabled: gimbal.isConnected) { yaw, pitch, active in
                 updateCombinedTouch(yaw: yaw, pitch: pitch, active: active)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -531,14 +531,14 @@ struct CameraControlScreen: View {
             .padding(.bottom, 66)
 
         case .dual:
-            CameraHorizontalAxisJoystick(label: "YAW", enabled: gimbal.isConnected) { value, active in
+            CameraHorizontalAxisJoystick(label: "水平", enabled: gimbal.isConnected) { value, active in
                 updateYawTouch(value: value, active: active)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
             .padding(.leading, 22)
             .padding(.bottom, 66)
 
-            CameraVerticalAxisJoystick(label: "PITCH", enabled: gimbal.isConnected) { value, active in
+            CameraVerticalAxisJoystick(label: "俯仰", enabled: gimbal.isConnected) { value, active in
                 updatePitchTouch(value: value, active: active)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -553,7 +553,7 @@ struct CameraControlScreen: View {
         ZStack {
             HStack(spacing: 2) {
                 CameraActionButton(
-                    title: gimbal.isGimbalLocked ? "Unlock" : "Lock",
+                    title: gimbal.isGimbalLocked ? "解锁" : "锁定",
                     systemImage: gimbal.isGimbalLocked ? "lock.fill" : "lock.open",
                     enabled: gimbal.isConnected
                 ) {
@@ -562,7 +562,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: "Recenter",
+                    title: "回中",
                     systemImage: "scope",
                     enabled: gimbal.isConnected
                 ) {
@@ -572,7 +572,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: "Mark",
+                    title: "标记",
                     systemImage: hasMarkedPosition ? "bookmark.fill" : "bookmark",
                     enabled: gimbal.canCaptureCenter
                 ) {
@@ -582,7 +582,7 @@ struct CameraControlScreen: View {
                 }
 
                 CameraActionButton(
-                    title: gimbal.smoothRecenterRunning ? "Returning" : "Return",
+                    title: gimbal.smoothRecenterRunning ? "返回中" : "返回",
                     systemImage: "arrow.uturn.backward",
                     enabled: gimbal.canSmoothRecenter && !gimbal.smoothRecenterRunning
                 ) {
@@ -608,7 +608,7 @@ struct CameraControlScreen: View {
     private var portraitGimbalControls: some View {
         switch joystickLayout {
         case .left:
-            CameraCombinedJoystick(label: "PAN / TILT", enabled: gimbal.isConnected) { yaw, pitch, active in
+            CameraCombinedJoystick(label: "水平 / 俯仰", enabled: gimbal.isConnected) { yaw, pitch, active in
                 updateCombinedTouch(yaw: yaw, pitch: pitch, active: active)
             }
             .scaleEffect(0.90)
@@ -617,7 +617,7 @@ struct CameraControlScreen: View {
             .padding(.bottom, 142)
 
         case .right:
-            CameraCombinedJoystick(label: "PAN / TILT", enabled: gimbal.isConnected) { yaw, pitch, active in
+            CameraCombinedJoystick(label: "水平 / 俯仰", enabled: gimbal.isConnected) { yaw, pitch, active in
                 updateCombinedTouch(yaw: yaw, pitch: pitch, active: active)
             }
             .scaleEffect(0.90)
@@ -626,7 +626,7 @@ struct CameraControlScreen: View {
             .padding(.bottom, 142)
 
         case .dual:
-            CameraHorizontalAxisJoystick(label: "YAW", enabled: gimbal.isConnected) { value, active in
+            CameraHorizontalAxisJoystick(label: "水平", enabled: gimbal.isConnected) { value, active in
                 updateYawTouch(value: value, active: active)
             }
             .scaleEffect(0.90)
@@ -634,7 +634,7 @@ struct CameraControlScreen: View {
             .padding(.leading, 4)
             .padding(.bottom, 140)
 
-            CameraVerticalAxisJoystick(label: "PITCH", enabled: gimbal.isConnected) { value, active in
+            CameraVerticalAxisJoystick(label: "俯仰", enabled: gimbal.isConnected) { value, active in
                 updatePitchTouch(value: value, active: active)
             }
             .scaleEffect(0.90)
@@ -653,7 +653,7 @@ struct CameraControlScreen: View {
             showCameraSettings = false
             showCameraConnections = false
         } label: {
-            Label("Layout", systemImage: "rectangle.split.2x1")
+            Label("布局", systemImage: "rectangle.split.2x1")
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .padding(.horizontal, 9)
                 .padding(.vertical, 6)
@@ -697,7 +697,7 @@ struct CameraControlScreen: View {
                 Spacer()
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Text("Monitoring Tools")
+                        Text("监看工具")
                             .font(.system(size: 14, weight: .semibold))
                         Spacer()
                         Button {
@@ -709,11 +709,11 @@ struct CameraControlScreen: View {
                         .buttonStyle(.plain)
                     }
 
-                    Toggle("Grid", isOn: $gridEnabled)
+                    Toggle("网格线", isOn: $gridEnabled)
 
-                    Toggle("Full 16:9 in landscape", isOn: $landscapeFull16x9)
+                    Toggle("横屏使用完整 16:9 画面", isOn: $landscapeFull16x9)
 
-                    Toggle("Automatic Picture in Picture", isOn: $automaticPictureInPictureEnabled)
+                    Toggle("自动画中画", isOn: $automaticPictureInPictureEnabled)
 
                     Divider()
 
@@ -721,14 +721,14 @@ struct CameraControlScreen: View {
                         showTools = false
                         onOpenLegacyDebug()
                     } label: {
-                        Label("Legacy / Debug", systemImage: "wrench.and.screwdriver")
+                        Label("控制 / 调试", systemImage: "wrench.and.screwdriver")
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)
 
                     Divider()
 
-                    Text("Histogram, waveform, zebras, false color and focus peaking will be enabled only after their real video-analysis pipelines are implemented.")
+                    Text("直方图、波形图、斑马纹、伪色和峰值对焦尚未实现，暂不可用。")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 }
@@ -814,7 +814,7 @@ struct CameraControlScreen: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(cameraSettingsDestination.title)
                                 .font(.system(size: 14, weight: .semibold))
-                            Text(gimbal.isConnected ? "Pocket 3 connected" : "Pocket 3 disconnected")
+                            Text(gimbal.isConnected ? "Pocket 3 已连接" : "Pocket 3 已断开")
                                 .font(.system(size: 9, weight: .medium, design: .rounded))
                                 .foregroundStyle(gimbal.isConnected ? Color.green : Color.secondary)
                         }
@@ -829,7 +829,7 @@ struct CameraControlScreen: View {
                     }
 
                     HStack(spacing: 6) {
-                        Text("MODE")
+                        Text("模式")
                             .font(.system(size: 8.5, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
                         Text(currentShootingModeDescription)
@@ -843,8 +843,8 @@ struct CameraControlScreen: View {
                     }
 
                     Text(cameraSettingsDestination == .camera
-                         ? "The Pocket 3 shooting mode is read live from 02/80. Timelapse ↔ Motionlapse switching is now capture-confirmed through 02/E1; unrelated shooting-mode switching remains read-only here."
-                         : "Quick access follows the Pocket 3's live shooting mode. Supported core values continue to update from camera readback after connection.")
+                         ? "拍摄模式由 Pocket 3 实时反馈。目前支持在静态延时与轨迹延时之间切换，其他模式请在相机上切换。"
+                         : "快捷设置随相机当前模式变化，连接后参数会根据相机反馈实时更新。")
                         .font(.system(size: 9.5))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -920,7 +920,7 @@ struct CameraControlScreen: View {
     @ViewBuilder
     private var currentModeSettingsSection: some View {
         if !gimbal.isConnected {
-            cameraSettingsNote("Connect to the Pocket 3 to load mode-specific controls.")
+            cameraSettingsNote("连接 Pocket 3 后可加载当前模式的控制选项。")
         } else if let mode = currentShootingMode {
             switch mode {
             case .video:
@@ -944,16 +944,16 @@ struct CameraControlScreen: View {
                 motionlapseSettingsSection
             }
         } else if let raw = cameraState.shootingModeRawValue {
-            cameraSettingsNote(String(format: "Unsupported shooting-mode readback 0x%02X. No mode-specific writer controls are shown.", raw))
+            cameraSettingsNote(String(format: "暂不支持此拍摄模式（0x%02X），无法显示对应的设置选项。", raw))
         } else {
-            cameraSettingsNote("Waiting for the Pocket 3 shooting-mode status push …")
+            cameraSettingsNote("正在等待 Pocket 3 反馈拍摄模式…")
         }
     }
 
     @ViewBuilder
     private var commonCameraSettingsSections: some View {
-        cameraSettingsSectionTitle("Common Camera Controls")
-        cameraSettingsNote("These controls are kept separate from the active shooting-mode block. Their command mappings are capture-derived; readback is used where decoded.")
+        cameraSettingsSectionTitle("通用相机设置")
+        cameraSettingsNote("以下为通用设置；已支持的参数会显示相机实际反馈值。")
         whiteBalanceSettingsSection
         exposureSettingsSection
         focusSettingsSection
@@ -965,15 +965,15 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var normalVideoSettingsSection: some View {
-        cameraSettingsSectionTitle("Normal Video Format")
-        cameraSettingsNote("Video mode confirmed from live 02/80 readback. Kaze follows the Pocket's effective orientation; change Landscape / Portrait on the camera itself and the available format choices update from live readback.")
+        cameraSettingsSectionTitle("普通录像规格")
+        cameraSettingsNote("已确认相机处于录像模式。请在 Pocket 3 上切换横竖屏，分辨率选项会自动更新。")
 
         if let aspect = cameraReadback.sensorAspectRatio {
-            cameraSettingsNote("Effective orientation: \(aspect.displayName). Remote orientation switching is deferred; these controls only change recording format within the camera's current orientation.")
+            cameraSettingsNote("当前画面方向：\(aspect.displayName)。请在相机上切换横竖屏，此处只能调整当前方向的录像规格。")
 
             switch aspect {
             case .landscape:
-                Text("Landscape / 1:1 Resolution")
+                Text("横屏 / 方形分辨率")
                     .font(.system(size: 10, weight: .semibold))
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 7)], spacing: 7) {
                     videoResolutionButton("1080p", .p1080)
@@ -985,7 +985,7 @@ struct CameraControlScreen: View {
                 }
 
             case .portrait:
-                Text("Portrait / 9:16 Resolution")
+                Text("竖屏分辨率")
                     .font(.system(size: 10, weight: .semibold))
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 7)], spacing: 7) {
                     videoResolutionButton("9:16 1080", .portrait1080)
@@ -994,10 +994,10 @@ struct CameraControlScreen: View {
                 }
             }
         } else {
-            cameraSettingsNote("Waiting for orientation readback before enabling resolution changes.")
+            cameraSettingsNote("等待相机反馈画面方向后，才能调整分辨率。")
         }
 
-        Text("Frame Rate")
+        Text("帧率")
             .font(.system(size: 10, weight: .semibold))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 7)], spacing: 7) {
             videoFrameRateButton("24", .fps24)
@@ -1017,15 +1017,15 @@ struct CameraControlScreen: View {
         }
 
         if cameraReadback.videoResolution != nil, cameraReadback.videoFrameRate != nil {
-            cameraSettingsNote("Camera readback: \(currentVideoValue)")
+            cameraSettingsNote("相机当前参数：\(currentVideoValue)")
         } else if lastSentVideo != "—" {
-            cameraSettingsNote("Last sent: \(lastSentVideo)")
+            cameraSettingsNote("上次设置：\(lastSentVideo)")
         }
     }
 
     @ViewBuilder
     private var videoCompressionAndColorSection: some View {
-        cameraSettingsSectionTitle("Compression")
+        cameraSettingsSectionTitle("视频编码")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
                 title: "H.264",
@@ -1045,15 +1045,15 @@ struct CameraControlScreen: View {
             }
         }
 
-        cameraSettingsSectionTitle("Color Profile")
+        cameraSettingsSectionTitle("色彩模式")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Normal",
-                selected: currentColorValue == "Normal",
+                title: "普通",
+                selected: currentColorValue == "普通",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setColorProfile(.normal)
-                lastSentColor = "Normal"
+                lastSentColor = "普通"
             }
             CameraSettingChoiceButton(
                 title: "HLG",
@@ -1076,8 +1076,8 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var lowLightSettingsSection: some View {
-        cameraSettingsSectionTitle("Low-Light Video")
-        cameraSettingsNote("Low-Light mode confirmed from live 02/80 readback. Choose both fields, then Apply.")
+        cameraSettingsSectionTitle("低光录像")
+        cameraSettingsNote("已确认低光录像模式。请选择分辨率和帧率，再点应用。")
 
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
@@ -1111,14 +1111,14 @@ struct CameraControlScreen: View {
         }
 
         if lastSentLowLight != "—" {
-            cameraSettingsNote("Last sent: \(lastSentLowLight)")
+            cameraSettingsNote("上次设置：\(lastSentLowLight)")
         }
     }
 
     @ViewBuilder
     private var slowMotionSettingsSection: some View {
-        cameraSettingsSectionTitle("Slow Motion")
-        cameraSettingsNote("Slow Motion mode confirmed from live 02/80 readback. Exact captured presets only.")
+        cameraSettingsSectionTitle("慢动作")
+        cameraSettingsNote("已确认慢动作模式，仅提供已验证的规格。")
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 7)], spacing: 7) {
             slowMotionPresetButton("4K / 120 / 4×", .p4K, .fps120, .x4, "4K/120/4x")
             slowMotionPresetButton("2.7K / 120 / 4×", .p2_7K, .fps120, .x4, "2.7K/120/4x")
@@ -1129,14 +1129,14 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var whiteBalanceSettingsSection: some View {
-        cameraSettingsSectionTitle("White Balance")
+        cameraSettingsSectionTitle("白平衡")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Auto",
-                selected: currentWhiteBalanceValue == "AUTO",
+                title: "自动",
+                selected: currentWhiteBalanceValue == "自动",
                 enabled: gimbal.isConnected
             ) {
-                sendWhiteBalance(.auto, label: "AUTO")
+                sendWhiteBalance(.auto, label: "自动")
             }
             CameraSettingChoiceButton(
                 title: "5600 K",
@@ -1149,7 +1149,7 @@ struct CameraControlScreen: View {
         }
 
         HStack {
-            Text("Custom")
+            Text("自定义")
                 .font(.system(size: 10, weight: .semibold))
             Spacer()
             Text("\(Int(draftKelvin)) K")
@@ -1159,7 +1159,7 @@ struct CameraControlScreen: View {
         Slider(value: $draftKelvin, in: 2000...10_000, step: 100)
             .disabled(!gimbal.isConnected)
         CameraSettingChoiceButton(
-            title: "Send \(Int(draftKelvin)) K",
+            title: "设置为 \(Int(draftKelvin)) K",
             selected: currentWhiteBalanceValue == "\(Int(draftKelvin))K",
             enabled: gimbal.isConnected
         ) {
@@ -1170,47 +1170,47 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var exposureSettingsSection: some View {
-        cameraSettingsSectionTitle("Exposure Mode")
+        cameraSettingsSectionTitle("曝光模式")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Auto",
-                selected: currentExposureModeValue == "AUTO",
+                title: "自动",
+                selected: currentExposureModeValue == "自动",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setExposureMode(.auto)
-                lastSentExposureMode = "AUTO"
+                lastSentExposureMode = "自动"
             }
             CameraSettingChoiceButton(
-                title: "Manual",
-                selected: currentExposureModeValue == "MANUAL",
+                title: "手动",
+                selected: currentExposureModeValue == "手动",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setExposureMode(.manual)
-                lastSentExposureMode = "MANUAL"
+                lastSentExposureMode = "手动"
             }
         }
 
-        cameraSettingsSectionTitle("Manual ISO")
-        cameraSettingsNote("Complete Pocket 3 Mimo ISO menu captured in C3-ISO-full.")
+        cameraSettingsSectionTitle("手动 ISO")
+        cameraSettingsNote("包含已验证的 Pocket 3 手动 ISO 选项。")
         if let effectiveISO = cameraReadback.effectiveISO {
-            cameraSettingsNote("Camera effective ISO: \(effectiveISO)")
+            cameraSettingsNote("相机实际 ISO：\(effectiveISO)")
         }
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 62), spacing: 7)], spacing: 7) {
             ForEach(Pocket3CameraSettings.ManualISO.allCases, id: \.rawValue) { iso in
-                isoButton(iso.displayName, iso, iso == .auto ? "AUTO" : iso.displayName)
+                isoButton(iso.displayName, iso, iso == .auto ? "自动" : iso.displayName)
             }
         }
 
-        if currentExposureModeValue == "MANUAL" {
+        if currentExposureModeValue == "手动" {
             if let shutters = availableManualShutters {
-                cameraSettingsSectionTitle("Manual Shutter")
+                cameraSettingsSectionTitle("手动快门")
                 if currentShootingMode == .video,
                    let fps = cameraReadback.videoFrameRate {
                     cameraSettingsNote(
-                        "Video shutter follows Mimo's frame-rate minimum for \(frameRateLabel(fps)) fps. Shutter write readback is not decoded yet."
+                        "当前为 \(frameRateLabel(fps)) 帧/秒，快门范围随帧率变化。暂不支持读取设置后的快门值。"
                     )
                 } else {
-                    cameraSettingsNote("Complete Photo shutter menu captured in C3-SHUTTER-photo-full. Shutter write readback is not decoded yet.")
+                    cameraSettingsNote("包含已验证的拍照快门选项，暂不支持读取设置后的快门值。")
                 }
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 7)], spacing: 7) {
@@ -1219,11 +1219,11 @@ struct CameraControlScreen: View {
                     }
                 }
             } else {
-                cameraSettingsNote("Manual shutter is exposed only for capture-confirmed Photo and normal Video menu states.")
+                cameraSettingsNote("仅在已验证的拍照和普通录像模式下提供手动快门。")
             }
         }
 
-        cameraSettingsSectionTitle("Auto EV Compensation")
+        cameraSettingsSectionTitle("自动曝光补偿")
         HStack {
             Text("-3 EV")
                 .font(.system(size: 9))
@@ -1240,7 +1240,7 @@ struct CameraControlScreen: View {
         Slider(value: $draftEVThirdStops, in: -9...9, step: 1)
             .disabled(!gimbal.isConnected)
         CameraSettingChoiceButton(
-            title: "Send \(evLabel(thirdStops: Int(draftEVThirdStops)))",
+            title: "应用 \(evLabel(thirdStops: Int(draftEVThirdStops)))",
             selected: currentEVValue == evLabel(thirdStops: Int(draftEVThirdStops)),
             enabled: gimbal.isConnected
         ) {
@@ -1248,8 +1248,8 @@ struct CameraControlScreen: View {
             sendEV(thirdStops: thirdStops, label: evLabel(thirdStops: thirdStops))
         }
 
-        cameraSettingsSectionTitle("ISO MAX")
-        cameraSettingsNote("Complete Pocket 3 Mimo ISO MAX menu captured in C3-ISO-MAX. Write readback is not decoded yet.")
+        cameraSettingsSectionTitle("ISO 上限")
+        cameraSettingsNote("包含已验证的 ISO 上限选项，暂不支持读取设置后的值。")
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 62), spacing: 7)], spacing: 7) {
             ForEach(Pocket3CameraSettings.ISOMax.allCases, id: \.rawValue) { isoMax in
                 isoMaxButton(isoMax)
@@ -1259,10 +1259,10 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var focusSettingsSection: some View {
-        cameraSettingsSectionTitle("Focus")
+        cameraSettingsSectionTitle("对焦")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Single AF",
+                title: "单次自动对焦",
                 selected: currentFocusValue == "S-AF",
                 enabled: gimbal.isConnected
             ) {
@@ -1270,7 +1270,7 @@ struct CameraControlScreen: View {
                 lastSentFocus = "S-AF"
             }
             CameraSettingChoiceButton(
-                title: "Continuous AF",
+                title: "连续自动对焦",
                 selected: currentFocusValue == "C-AF",
                 enabled: gimbal.isConnected
             ) {
@@ -1279,56 +1279,56 @@ struct CameraControlScreen: View {
             }
         }
 
-        cameraSettingsSectionTitle("Product Showcase")
+        cameraSettingsSectionTitle("产品展示对焦")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Off",
-                selected: lastSentProductShowcase == "OFF",
+                title: "关闭",
+                selected: lastSentProductShowcase == "关",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setProductShowcaseEnabled(false)
-                lastSentProductShowcase = "OFF"
+                lastSentProductShowcase = "关"
             }
             CameraSettingChoiceButton(
-                title: "On",
-                selected: lastSentProductShowcase == "ON",
+                title: "开启",
+                selected: lastSentProductShowcase == "开",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setProductShowcaseEnabled(true)
-                lastSentProductShowcase = "ON"
+                lastSentProductShowcase = "开"
             }
         }
     }
 
     @ViewBuilder
     private var proSettingsSection: some View {
-        cameraSettingsSectionTitle("Pro")
+        cameraSettingsSectionTitle("专业模式")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Off",
-                selected: lastSentPro == "OFF",
+                title: "关闭",
+                selected: lastSentPro == "关",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setProEnabled(false)
-                lastSentPro = "OFF"
+                lastSentPro = "关"
             }
             CameraSettingChoiceButton(
-                title: "On",
-                selected: lastSentPro == "ON",
+                title: "开启",
+                selected: lastSentPro == "开",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setProEnabled(true)
-                lastSentPro = "ON"
+                lastSentPro = "开"
             }
         }
     }
 
     @ViewBuilder
     private var photoSettingsSection: some View {
-        cameraSettingsSectionTitle("Photo")
-        cameraSettingsNote("Photo mode confirmed from live 02/80 readback.")
+        cameraSettingsSectionTitle("拍照")
+        cameraSettingsNote("已确认相机处于拍照模式。")
 
-        Text("Frame")
+        Text("画面比例")
             .font(.system(size: 10, weight: .semibold))
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
@@ -1349,7 +1349,7 @@ struct CameraControlScreen: View {
             }
         }
 
-        Text("Format")
+        Text("格式")
             .font(.system(size: 10, weight: .semibold))
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
@@ -1370,10 +1370,10 @@ struct CameraControlScreen: View {
             }
         }
 
-        Text("Countdown")
+        Text("拍照倒计时")
             .font(.system(size: 10, weight: .semibold))
         HStack(spacing: 7) {
-            photoCountdownButton("Off", .off, "OFF")
+            photoCountdownButton("关闭", .off, "关")
             photoCountdownButton("3s", .seconds3, "3s")
             photoCountdownButton("5s", .seconds5, "5s")
             photoCountdownButton("7s", .seconds7, "7s")
@@ -1382,18 +1382,18 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var timelapseSettingsSection: some View {
-        cameraSettingsSectionTitle("Timelapse")
-        cameraSettingsNote("Stationary Timelapse. Interval/duration/output state use live Pocket readback. C3 captures cover the complete Mimo interval and duration menus.")
+        cameraSettingsSectionTitle("静态延时")
+        cameraSettingsNote("静态延时摄影。间隔、时长和输出格式会读取相机当前设置。")
 
         if let interval = cameraReadback.timelapseIntervalTenths,
            let duration = cameraReadback.timelapseDurationSeconds,
            let output = cameraReadback.timelapseOutput {
             cameraSettingsNote(
-                "Camera: \(timelapseIntervalLabel(interval)) / \(timelapseDurationLabel(duration)) / \(timelapseOutputLabel(output))"
+                "相机：\(timelapseIntervalLabel(interval)) / \(timelapseDurationLabel(duration)) / \(timelapseOutputLabel(output))"
             )
         }
 
-        Text("Interval")
+        Text("拍摄间隔")
             .font(.system(size: 10, weight: .semibold))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 7)], spacing: 7) {
             timelapseIntervalButton("0.5s", 5)
@@ -1413,7 +1413,7 @@ struct CameraControlScreen: View {
             timelapseIntervalButton("1m", 600)
         }
 
-        Text("Duration")
+        Text("拍摄时长")
             .font(.system(size: 10, weight: .semibold))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: 7)], spacing: 7) {
             timelapseDurationButton("∞", 0)
@@ -1427,16 +1427,16 @@ struct CameraControlScreen: View {
             timelapseDurationButton("5h", 18_000)
         }
 
-        Text("Output")
+        Text("输出格式")
             .font(.system(size: 10, weight: .semibold))
         HStack(spacing: 7) {
-            timelapseOutputButton("Video", .video)
-            timelapseOutputButton("JPEG + Video", .jpegAndVideo)
-            timelapseOutputButton("RAW + Video", .rawAndVideo)
+            timelapseOutputButton("录像", .video)
+            timelapseOutputButton("JPEG + 视频", .jpegAndVideo)
+            timelapseOutputButton("RAW + 视频", .rawAndVideo)
         }
 
         CameraSettingChoiceButton(
-            title: "Apply Timelapse",
+            title: "应用延时设置",
             selected: false,
             enabled: canApplyTimelapse
         ) {
@@ -1459,25 +1459,25 @@ struct CameraControlScreen: View {
             draftTimelapseOutput = nil
         }
         if lastSentTimelapse != "—" {
-            cameraSettingsNote("Last sent: \(lastSentTimelapse)")
+            cameraSettingsNote("上次设置：\(lastSentTimelapse)")
         }
     }
 
     @ViewBuilder
     private var motionlapseSettingsSection: some View {
-        cameraSettingsSectionTitle("Motionlapse")
-        cameraSettingsNote("Moving Motionlapse is mode 0x18. PID 0x0037 selects L → R, R → L, or Custom. Stationary lapse is ordinary Timelapse, not a fourth Motionlapse direction.")
+        cameraSettingsSectionTitle("轨迹延时")
+        cameraSettingsNote("轨迹延时支持从左到右、从右到左或自定义路径。固定机位拍摄请使用静态延时。")
 
-        Text("Motion Path")
+        Text("运动路径")
             .font(.system(size: 10, weight: .semibold))
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 7)], spacing: 7) {
-            motionlapseDirectionButton("L → R", .leftToRight)
-            motionlapseDirectionButton("R → L", .rightToLeft)
-            motionlapseDirectionButton("Custom", .custom)
+            motionlapseDirectionButton("左 → 右", .leftToRight)
+            motionlapseDirectionButton("右 → 左", .rightToLeft)
+            motionlapseDirectionButton("自定义", .custom)
         }
 
         CameraSettingChoiceButton(
-            title: "Return to Timelapse",
+            title: "切回静态延时",
             selected: false,
             enabled: gimbal.isConnected
         ) {
@@ -1487,11 +1487,11 @@ struct CameraControlScreen: View {
         if let direction = cameraReadback.motionlapseDirection {
             if direction == .custom, let count = cameraReadback.motionlapseWaypointCount {
                 cameraSettingsNote(
-                    "Camera motion: \(motionlapseDirectionLabel(direction)) • \(count) waypoint\(count == 1 ? "" : "s")"
+                    "相机轨迹：\(motionlapseDirectionLabel(direction)) · \(count) 个位置点"
                 )
                 motionlapseCustomWaypointSection(savedCount: Int(count))
             } else {
-                cameraSettingsNote("Camera motion: \(motionlapseDirectionLabel(direction))")
+                cameraSettingsNote("相机轨迹：\(motionlapseDirectionLabel(direction))")
             }
         }
 
@@ -1499,16 +1499,16 @@ struct CameraControlScreen: View {
            let duration = cameraReadback.timelapseDurationSeconds,
            let output = cameraReadback.timelapseOutput {
             cameraSettingsNote(
-                "Lapse state: \(timelapseIntervalLabel(interval)) / \(timelapseDurationLabel(duration)) / \(timelapseOutputLabel(output))"
+                "延时设置：\(timelapseIntervalLabel(interval)) / \(timelapseDurationLabel(duration)) / \(timelapseOutputLabel(output))"
             )
         }
 
-        cameraSettingsNote("Custom point writes and reverse-order deletion are hardware-confirmed through 4 points. Preview uses capture-confirmed PID 0x0036 and reports live Preview activity through cam_motionlapse_params.")
+        cameraSettingsNote("自定义路径最多支持 4 个位置点，可按倒序删除。预览时会显示相机实际运行状态。")
     }
 
     @ViewBuilder
     private func motionlapseCustomWaypointSection(savedCount: Int) -> some View {
-        Text("Custom Waypoints")
+        Text("自定义位置点")
             .font(.system(size: 10, weight: .semibold))
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 116), spacing: 7)], spacing: 7) {
@@ -1520,7 +1520,7 @@ struct CameraControlScreen: View {
 
         if savedCount >= 2 {
             CameraSettingChoiceButton(
-                title: cameraReadback.motionlapsePreviewActive == true ? "Previewing…" : "Preview Path",
+                title: cameraReadback.motionlapsePreviewActive == true ? "预览中…" : "预览路径",
                 selected: cameraReadback.motionlapsePreviewActive == true,
                 enabled: gimbal.isConnected
                     && currentShootingMode == .motionlapse
@@ -1533,7 +1533,7 @@ struct CameraControlScreen: View {
 
         if savedCount > 0 {
             CameraSettingChoiceButton(
-                title: "Delete Point \(savedCount)",
+                title: "删除位置点 \(savedCount)",
                 selected: false,
                 enabled: gimbal.isConnected
                     && currentShootingMode == .motionlapse
@@ -1553,17 +1553,17 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var hyperlapseSettingsSection: some View {
-        cameraSettingsSectionTitle("Hyperlapse Format")
-        cameraSettingsNote("Resolution/FPS and speed now follow live Pocket readback. This temporary UI exposes only the exact Hyperlapse format pairs captured in C2-HYP-010.")
+        cameraSettingsSectionTitle("运动延时规格")
+        cameraSettingsNote("分辨率、帧率和速度会读取相机当前设置，此处仅提供已验证的规格。")
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 7)], spacing: 7) {
             hyperlapseFormatButton("1080p / 25", .p1080, .fps25)
             hyperlapseFormatButton("2.7K / 30", .p2_7K, .fps30)
             hyperlapseFormatButton("4K / 30", .p4K, .fps30)
         }
 
-        cameraSettingsSectionTitle("Hyperlapse Speed")
+        cameraSettingsSectionTitle("运动延时速度")
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 52), spacing: 7)], spacing: 7) {
-            hyperlapseButton("Auto", .auto)
+            hyperlapseButton("自动", .auto)
             hyperlapseButton("2×", .x2)
             hyperlapseButton("5×", .x5)
             hyperlapseButton("10×", .x10)
@@ -1574,8 +1574,8 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var panoramaSettingsSection: some View {
-        cameraSettingsSectionTitle("Panorama")
-        cameraSettingsNote("Panorama type and photo format follow live cam_pano_params readback. Start uses the capture-confirmed 02/01 07 command for both 180° and 3×3.")
+        cameraSettingsSectionTitle("全景拍照")
+        cameraSettingsNote("全景类型和照片格式会读取相机当前设置，支持 180° 和 3×3 全景。")
 
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
@@ -1612,7 +1612,7 @@ struct CameraControlScreen: View {
         }
 
         CameraSettingChoiceButton(
-            title: "Start Panorama",
+            title: "开始全景拍照",
             selected: false,
             enabled: gimbal.isConnected
                 && currentShootingMode == .panorama
@@ -1625,34 +1625,34 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var audioSettingsSection: some View {
-        cameraSettingsSectionTitle("Audio Channel")
+        cameraSettingsSectionTitle("声道")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Mono",
-                selected: lastSentAudioChannel == "MONO",
+                title: "单声道",
+                selected: lastSentAudioChannel == "单声道",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setAudioChannel(.mono)
-                lastSentAudioChannel = "MONO"
+                lastSentAudioChannel = "单声道"
             }
             CameraSettingChoiceButton(
-                title: "Stereo",
-                selected: lastSentAudioChannel == "STEREO",
+                title: "立体声",
+                selected: lastSentAudioChannel == "立体声",
                 enabled: gimbal.isConnected
             ) {
                 gimbal.camera.setAudioChannel(.stereo)
-                lastSentAudioChannel = "STEREO"
+                lastSentAudioChannel = "立体声"
             }
         }
-        cameraSettingsNote("Wind Noise Reduction and Directional Audio are withheld pending cleanup captures of the structured 02/9F payload.")
+        cameraSettingsNote("降风噪和定向收音暂未开放。")
     }
 
     @ViewBuilder
     private var cameraFacingAndRecenterSection: some View {
-        cameraSettingsSectionTitle("Gimbal / Camera")
+        cameraSettingsSectionTitle("云台 / 相机")
         HStack(spacing: 7) {
             CameraSettingChoiceButton(
-                title: "Recenter",
+                title: "回中",
                 selected: false,
                 enabled: gimbal.isConnected
             ) {
@@ -1661,7 +1661,7 @@ struct CameraControlScreen: View {
                 gimbal.recenter()
             }
             CameraSettingChoiceButton(
-                title: "Selfie / Forward",
+                title: "自拍 / 朝前",
                 selected: false,
                 enabled: gimbal.isConnected
             ) {
@@ -1673,8 +1673,8 @@ struct CameraControlScreen: View {
 
     @ViewBuilder
     private var withheldSettingsSection: some View {
-        cameraSettingsSectionTitle("Still Withheld")
-        cameraSettingsNote("Still withheld: shooting-mode setters outside the confirmed Timelapse/Motionlapse paths, beauty sliders, wind/directional audio, and Follow / Tilt Locked / FPV mode selection. RTMP and media management remain out of this settings UI.")
+        cameraSettingsSectionTitle("暂未支持")
+        cameraSettingsNote("暂未支持：静态/轨迹延时以外的模式切换、美颜、降风噪、定向收音、云台跟随/俯仰锁定/FPV 模式。此界面也不包含 RTMP 和媒体管理。")
     }
 
     private func videoResolutionButton(
@@ -1695,7 +1695,7 @@ struct CameraControlScreen: View {
         _ frameRate: Pocket3CameraSettings.FrameRate
     ) -> some View {
         CameraSettingChoiceButton(
-            title: "\(title) fps",
+            title: "\(title) 帧/秒",
             selected: selectedVideoFrameRate == frameRate,
             enabled: gimbal.isConnected
         ) {
@@ -1708,7 +1708,7 @@ struct CameraControlScreen: View {
         _ frameRate: Pocket3CameraSettings.FrameRate
     ) -> some View {
         CameraSettingChoiceButton(
-            title: "\(title) fps",
+            title: "\(title) 帧/秒",
             selected: draftLowLightFrameRate == frameRate,
             enabled: gimbal.isConnected
         ) {
@@ -1817,7 +1817,7 @@ struct CameraControlScreen: View {
         let isNextPoint = savedCount == point - 1
 
         return CameraSettingChoiceButton(
-            title: alreadySaved ? "Point \(point) Saved" : "Set Point \(point)",
+            title: alreadySaved ? "位置点 \(point) 已保存" : "设置位置点 \(point)",
             selected: alreadySaved,
             enabled: gimbal.isConnected
                 && currentShootingMode == .motionlapse
@@ -1834,7 +1834,7 @@ struct CameraControlScreen: View {
         guard let slot = Pocket3CameraSettings.MotionlapseWaypointSlot(pointNumber: point),
               let interval = cameraReadback.timelapseIntervalTenths,
               let duration = cameraReadback.timelapseDurationSeconds else {
-            lastMotionlapseWaypointAction = "Waypoint not sent: waiting for live Motionlapse state."
+            lastMotionlapseWaypointAction = "未发送位置点：正在等待相机反馈轨迹延时状态。"
             return
         }
 
@@ -1842,7 +1842,7 @@ struct CameraControlScreen: View {
               let pitch = motionlapseTenths(telemetry.pitchDeg),
               let roll = motionlapseTenths(telemetry.rollDeg),
               let yaw = motionlapseTenths(telemetry.yawDeg) else {
-            lastMotionlapseWaypointAction = "Waypoint not sent: fresh 04/05 gimbal telemetry is unavailable."
+            lastMotionlapseWaypointAction = "未发送位置点：尚未收到最新云台姿态数据。"
             return
         }
 
@@ -1856,7 +1856,7 @@ struct CameraControlScreen: View {
         )
 
         lastMotionlapseWaypointAction = String(
-            format: "Point %d sent: pitch %+.1f° / roll %+.1f° / yaw %+.1f° — waiting for Pocket readback.",
+            format: "位置点 %d 已发送：俯仰 %+.1f° / 横滚 %+.1f° / 水平 %+.1f°，等待相机确认。",
             point,
             telemetry.pitchDeg,
             telemetry.rollDeg,
@@ -1868,7 +1868,7 @@ struct CameraControlScreen: View {
         guard let slot = Pocket3CameraSettings.MotionlapseWaypointSlot(pointNumber: savedCount),
               let interval = cameraReadback.timelapseIntervalTenths,
               let duration = cameraReadback.timelapseDurationSeconds else {
-            lastMotionlapseWaypointAction = "Waypoint delete not sent: waiting for live Motionlapse state."
+            lastMotionlapseWaypointAction = "未删除位置点：正在等待相机反馈轨迹延时状态。"
             return
         }
 
@@ -1877,7 +1877,7 @@ struct CameraControlScreen: View {
             intervalTenths: interval,
             durationSeconds: duration
         )
-        lastMotionlapseWaypointAction = "Delete Point \(savedCount) sent — waiting for Pocket readback."
+        lastMotionlapseWaypointAction = "已发送删除位置点 \(savedCount) 的指令，等待相机确认。"
     }
 
     private func motionlapseTenths(_ degrees: Double) -> Int16? {
@@ -1963,16 +1963,16 @@ struct CameraControlScreen: View {
 
     private var draftVideoFormatApplyTitle: String {
         guard let resolution = selectedVideoResolution, let frameRate = selectedVideoFrameRate else {
-            return "Choose Resolution + FPS"
+            return "选择分辨率和帧率"
         }
-        return "Apply \(videoResolutionLabel(resolution)) / \(frameRateLabel(frameRate))"
+        return "应用 \(videoResolutionLabel(resolution)) / \(frameRateLabel(frameRate))"
     }
 
     private var draftLowLightApplyTitle: String {
         guard let resolution = draftLowLightResolution, let frameRate = draftLowLightFrameRate else {
-            return "Choose Resolution + FPS"
+            return "选择分辨率和帧率"
         }
-        return "Apply \(videoResolutionLabel(resolution)) / \(frameRateLabel(frameRate))"
+        return "应用 \(videoResolutionLabel(resolution)) / \(frameRateLabel(frameRate))"
     }
 
     private var canApplyTimelapse: Bool {
@@ -2052,9 +2052,9 @@ struct CameraControlScreen: View {
 
     private func motionlapseDirectionLabel(_ direction: Pocket3CameraSettings.MotionlapseDirection) -> String {
         switch direction {
-        case .custom: return "Custom"
-        case .leftToRight: return "L → R"
-        case .rightToLeft: return "R → L"
+        case .custom: return "自定义"
+        case .leftToRight: return "左 → 右"
+        case .rightToLeft: return "右 → 左"
         }
     }
 
@@ -2064,7 +2064,7 @@ struct CameraControlScreen: View {
         case 10: return "1s"
         case 100: return "10s"
         case 600: return "60s"
-        default: return "\(value) tenths"
+        default: return "\(value) 个 0.1 秒"
         }
     }
 
@@ -2081,9 +2081,9 @@ struct CameraControlScreen: View {
 
     private func timelapseOutputLabel(_ output: Pocket3CameraSettings.TimelapseOutput) -> String {
         switch output {
-        case .video: return "Video"
-        case .jpegAndVideo: return "JPEG+Video"
-        case .rawAndVideo: return "RAW+Video"
+        case .video: return "录像"
+        case .jpegAndVideo: return "JPEG+视频"
+        case .rawAndVideo: return "RAW+视频"
         }
     }
 
@@ -2201,9 +2201,9 @@ private enum TouchJoystickLayout: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .left: "Left"
-        case .right: "Right"
-        case .dual: "Dual"
+        case .left: "左侧"
+        case .right: "右侧"
+        case .dual: "双摇杆"
         }
     }
 }
@@ -2280,21 +2280,21 @@ private struct CameraTopStatusBar: View {
         .buttonStyle(.plain)
         .accessibilityLabel(
             gimbal.isConnected
-                ? "\(presentation.topLabel) connected. Open cameras."
-                : "Cameras. No camera connected."
+                ? "\(presentation.topLabel) 已连接，打开相机列表。"
+                : "相机：尚未连接。"
         )
     }
 
     @ViewBuilder
     private var inputStatus: some View {
         if headTracking.isEnabled && headTracking.isCentered && !headTracking.isManualOverrideActive {
-            Label("Head", systemImage: "airpodspro")
+            Label("头追", systemImage: "airpodspro")
                 .fixedSize()
         } else if gamepad.isConnected && gamepad.lastInputSource == .gamepad {
-            Label("Gamepad", systemImage: "gamecontroller.fill")
+            Label("手柄", systemImage: "gamecontroller.fill")
                 .fixedSize()
         } else {
-            Label("Touch", systemImage: "hand.tap.fill")
+            Label("触屏", systemImage: "hand.tap.fill")
                 .fixedSize()
         }
     }
@@ -2308,11 +2308,11 @@ private struct CameraTopStatusBar: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(.white.opacity(0.08), in: Capsule())
-            .accessibilityLabel("Camera format \(formatDescriptor)")
+            .accessibilityLabel("相机规格 \(formatDescriptor)")
     }
 
     private var responseStatus: some View {
-        Text(preferences.responseMode == .linear ? "LINEAR" : "PROGRESSIVE")
+        Text(preferences.responseMode == .linear ? "线性" : "渐进")
             .font(.system(size: 12, weight: .semibold, design: .rounded))
             .foregroundStyle(.secondary)
             .fixedSize()
@@ -2333,26 +2333,26 @@ private struct CameraTopStatusBar: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(
                         gimbal.cameraBatteryCharging == true
-                            ? "Camera battery \(batteryPercent) percent, charging"
-                            : "Camera battery \(batteryPercent) percent"
+                            ? "相机电量百分之 \(batteryPercent)，正在充电"
+                            : "相机电量百分之 \(batteryPercent)"
                     )
                 }
 
                 if let freeMiB = gimbal.cameraState.storageFreeMiB {
                     Text("SD \(storageFreeText(freeMiB))")
-                        .accessibilityLabel("SD card \(storageFreeText(freeMiB)) free")
+                        .accessibilityLabel("存储卡剩余 \(storageFreeText(freeMiB))")
                 }
 
                 if let remaining = gimbal.cameraState.remainingRecordSeconds {
                     Label(remainingTimeText(remaining), systemImage: "clock")
-                        .accessibilityLabel("Recording time remaining \(remainingTimeAccessibilityText(remaining))")
+                        .accessibilityLabel("剩余录像时间 \(remainingTimeAccessibilityText(remaining))")
                 }
 
                 if gimbal.cameraState.recording == true,
                    let elapsed = gimbal.cameraState.elapsedRecordSeconds {
                     Label("REC \(elapsedTimeText(elapsed))", systemImage: "record.circle.fill")
                         .foregroundStyle(.red)
-                        .accessibilityLabel("Recording, elapsed \(elapsedTimeAccessibilityText(elapsed))")
+                        .accessibilityLabel("正在录像，已录制 \(elapsedTimeAccessibilityText(elapsed))")
                 }
             }
             .font(.system(size: portrait ? 11 : 12, weight: .semibold, design: .rounded))
@@ -2395,12 +2395,12 @@ private struct CameraTopStatusBar: View {
 
     private func remainingTimeAccessibilityText(_ seconds: UInt16) -> String {
         let total = Int(seconds)
-        return "\(total / 3600) hours \((total % 3600) / 60) minutes"
+        return "\(total / 3600) 小时 \((total % 3600) / 60) 分钟"
     }
 
     private func elapsedTimeAccessibilityText(_ seconds: UInt16) -> String {
         let total = Int(seconds)
-        return "\(total / 3600) hours \((total % 3600) / 60) minutes \(total % 60) seconds"
+        return "\(total / 3600) 小时 \((total % 3600) / 60) 分钟 \(total % 60) 秒"
     }
 
 }
@@ -2421,9 +2421,9 @@ private struct CameraLivePreview: View {
                 VStack(spacing: 5) {
                     Image(systemName: isConnected ? "video.fill" : "video.slash.fill")
                         .font(.title2)
-                    Text(isConnected ? "STARTING DIRECT VIDEO" : "POCKET 3 NOT CONNECTED")
+                    Text(isConnected ? "正在启动预览" : "Pocket 3 未连接")
                         .font(.caption.weight(.semibold))
-                    Text(isConnected ? "Waiting for capture-confirmed H.264 SPS / IDR" : "Connect to start direct preview")
+                    Text(isConnected ? "正在等待视频关键帧" : "连接相机即可开始实时预览")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -2681,8 +2681,8 @@ private struct CameraCaptureButton: View {
         .opacity(enabled ? 1 : (transitioning ? 0.75 : 0.55))
         .accessibilityLabel(
             photoShutter
-                ? "Take Pocket 3 photo"
-                : (recording ? "Stop Pocket 3 recording" : "Start Pocket 3 recording")
+                ? "使用 Pocket 3 拍照"
+                : (recording ? "停止 Pocket 3 录像" : "开始 Pocket 3 录像")
         )
     }
 }
@@ -2694,7 +2694,7 @@ private struct CameraLayoutPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text("Joystick Layout")
+                Text("摇杆布局")
                     .font(.system(size: 14, weight: .semibold))
                 Spacer()
                 Button {
@@ -2727,7 +2727,7 @@ private struct CameraLayoutPicker: View {
             }
 
             if selection == .dual {
-                Text("Dual: yaw on the left, pitch on the right.")
+                Text("双摇杆：左侧控制水平，右侧控制俯仰。")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
@@ -2763,24 +2763,24 @@ private struct CameraBottomControlBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            CameraControlItem(title: "MODE", value: modeValue, enabled: true) {
+            CameraControlItem(title: "模式", value: modeValue, enabled: true) {
                 openSettings(.video)
             }
             Divider().frame(height: 26)
-            CameraControlItem(title: "WB", value: whiteBalanceValue, enabled: true) {
+            CameraControlItem(title: "白平衡", value: whiteBalanceValue, enabled: true) {
                 openSettings(.whiteBalance)
             }
             Divider().frame(height: 26)
-            CameraControlItem(title: "EV", value: evValue, enabled: true) {
+            CameraControlItem(title: "曝光", value: evValue, enabled: true) {
                 openSettings(.exposure)
             }
             Divider().frame(height: 26)
-            CameraControlItem(title: "FOCUS", value: focusValue, enabled: true) {
+            CameraControlItem(title: "对焦", value: focusValue, enabled: true) {
                 openSettings(.focus)
             }
             Divider().frame(height: 26)
             CameraControlItem(
-                title: "CAMERA",
+                title: "相机",
                 value: "",
                 enabled: true,
                 systemImage: "camera.fill"
@@ -2789,7 +2789,7 @@ private struct CameraBottomControlBar: View {
             }
             Divider().frame(height: 26)
             CameraControlItem(
-                title: "TOOLS",
+                title: "工具",
                 value: "",
                 enabled: true,
                 systemImage: "slider.horizontal.3"
@@ -2887,7 +2887,7 @@ private struct CameraControlItem: View {
     }
 }
 
-#Preview("Camera Landscape") {
+#Preview("相机横屏") {
     CameraControlScreen(
         gimbal: Pocket3GimbalSession(),
         preferences: ControllerPreferences(),
@@ -2901,7 +2901,7 @@ private struct CameraControlItem: View {
     .frame(width: 852, height: 393)
 }
 
-#Preview("Camera Portrait") {
+#Preview("相机竖屏") {
     CameraControlScreen(
         gimbal: Pocket3GimbalSession(),
         preferences: ControllerPreferences(),

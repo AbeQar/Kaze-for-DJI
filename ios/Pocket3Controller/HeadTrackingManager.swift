@@ -40,9 +40,9 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     @Published private(set) var continuousYawDegrees = 0.0
     @Published private(set) var sampleCount: UInt64 = 0
 
-    @Published private(set) var statusText = "Off"
-    @Published private(set) var authorizationText = "Not determined"
-    @Published private(set) var controlText = "Head control not armed"
+    @Published private(set) var statusText = "关闭"
+    @Published private(set) var authorizationText = "尚未授权"
+    @Published private(set) var controlText = "头追尚未启动"
     @Published private(set) var commandText = "P=1024 Y=1024"
 
     /// Supplied by ContentView. Must return only fresh gimbal telemetry.
@@ -142,8 +142,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         headCommandWasActive = false
         resetRecenterAutoResumeState()
         isControlEngaged = false
-        statusText = "Starting…"
-        controlText = "Waiting for AirPods motion — then Set Head Center"
+        statusText = "正在启动…"
+        controlText = "等待 AirPods 运动数据，收到后请设置头部中心"
         commandText = "P=1024 Y=1024"
         lastConsoleLogUptime = 0.0
         print("AIRPODS HEAD CONTROL: ON — control remains DISARMED until Set Head Center")
@@ -170,8 +170,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         resetRecenterAutoResumeState()
         resetYawTracking()
         clearCenterInternal()
-        statusText = "Off"
-        controlText = "Head control not armed"
+        statusText = "关闭"
+        controlText = "头追尚未启动"
         print("AIRPODS HEAD CONTROL: OFF — neutral forced")
         refreshAuthorizationText()
     }
@@ -181,25 +181,25 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     @discardableResult
     func captureCenter() -> Bool {
         guard isEnabled, hasMotion else {
-            statusText = "Cannot center until AirPods motion is active"
+            statusText = "尚未收到 AirPods 运动数据，无法设置中心"
             return false
         }
 
         guard manualOverrides.isEmpty else {
-            statusText = "Release touch/gamepad before setting head center"
+            statusText = "请先松开触屏摇杆或手柄，再设置头部中心"
             return false
         }
 
         guard let gimbal = telemetryProvider?() else {
-            statusText = "Cannot center — waiting for fresh Pocket 3 telemetry"
-            controlText = "Connect the control link and wait for 04/05 telemetry"
+            statusText = "无法设置中心：等待 Pocket 3 最新姿态数据"
+            controlText = "请连接相机并等待云台姿态数据"
             return false
         }
 
         captureCurrentPose(using: gimbal)
         pendingRebase = false
-        statusText = "Head centered — LIVE gimbal control armed"
-        controlText = "LIVE — AirPods head tracking controls Pocket 3"
+        statusText = "中心已设置，头追控制已启动"
+        controlText = "跟随中：AirPods 正在控制 Pocket 3"
         print(
             String(
                 format: "HEAD CONTROL CENTER CAPTURED: head raw P=%+.1f Y=%+.1f R=%+.1f Ycont=%+.1f | gimbal baseline P=%+.1f Ycont=%+.1f",
@@ -225,8 +225,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         clearCenterInternal()
         pendingRebase = false
         resetRecenterAutoResumeState()
-        controlText = "Paused — Set Head Center to arm control again"
-        statusText = "Head control paused — Set Head Center"
+        controlText = "已暂停，请重新设置头部中心以启动"
+        statusText = "头追已暂停，请设置头部中心"
         print("HEAD CONTROL CENTER INVALIDATED: \(reason)")
     }
 
@@ -244,16 +244,16 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         resetRecenterAutoResumeState()
 
         guard shouldAutoResume else {
-            controlText = "Paused — Set Head Center to arm control again"
-            statusText = "Native recenter requested — head control remains disarmed"
+            controlText = "已暂停，请重新设置头部中心以启动"
+            statusText = "正在回中，头追尚未启动"
             print("HEAD CONTROL NATIVE RECENTER: no auto-resume because head control was not armed")
             return
         }
 
         autoResumeAfterRecenter = true
         recenterRequestedUptime = ProcessInfo.processInfo.systemUptime
-        controlText = "Paused — waiting for native recenter to settle…"
-        statusText = "Recenter running — head tracking will resume automatically"
+        controlText = "已暂停，等待云台完成回中…"
+        statusText = "正在回中，完成后将自动恢复头追"
         print("HEAD CONTROL NATIVE RECENTER PAUSE: \(reason) — auto-resume armed")
     }
 
@@ -274,7 +274,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
                     print("HEAD CONTROL NATIVE RECENTER AUTO-RESUME CANCELED: manual \(source.rawValue) took control")
                 }
                 isControlEngaged = false
-                controlText = "Manual override — \(source.rawValue)"
+                controlText = "手动接管：\(source.rawValue)"
                 print("HEAD CONTROL OVERRIDE BEGIN: \(source.rawValue)")
             }
             return
@@ -293,7 +293,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         isControlEngaged = false
         headCommandWasActive = false
         commandText = "P=1024 Y=1024"
-        controlText = "Manual override ended — rebasing…"
+        controlText = "手动接管已结束，正在重新校准…"
         print("HEAD CONTROL OVERRIDE END: \(source.rawValue) — rebasing current pose")
         attemptPendingRebase()
     }
@@ -304,7 +304,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
             self.isConnected = true
             print("AIRPODS CONNECTED")
             if self.isEnabled {
-                self.statusText = "AirPods connected — starting motion…"
+                self.statusText = "AirPods 已连接，正在启动运动采集…"
                 self.startMotionIfAvailable()
             }
         }
@@ -313,7 +313,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     func headphoneMotionManagerDidDisconnect(_ manager: CMHeadphoneMotionManager) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.forceSafetyNeutral(reason: "AirPods disconnected")
+            self.forceSafetyNeutral(reason: "AirPods 已断开")
             self.isConnected = false
             self.hasMotion = false
             print("AIRPODS DISCONNECTED — neutral forced")
@@ -325,8 +325,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
             self.pendingRebase = false
             self.resetRecenterAutoResumeState()
             if self.isEnabled {
-                self.statusText = "AirPods disconnected — waiting"
-                self.controlText = "Paused — reconnect AirPods and Set Head Center"
+                self.statusText = "AirPods 已断开，等待重新连接"
+                self.controlText = "已暂停，请重新连接 AirPods 并设置头部中心"
             }
         }
     }
@@ -337,22 +337,22 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         refreshAuthorizationText()
 
         guard motionManager.isDeviceMotionAvailable else {
-            statusText = "Waiting for motion-capable AirPods"
+            statusText = "等待连接支持运动数据的 AirPods"
             return
         }
 
         guard !motionManager.isDeviceMotionActive else { return }
 
-        statusText = "Starting motion…"
+        statusText = "正在启动运动采集…"
 
         motionManager.startDeviceMotionUpdates(to: motionQueue) { [weak self] motion, error in
             guard let self else { return }
 
             if let error {
                 DispatchQueue.main.async {
-                    self.forceSafetyNeutral(reason: "AirPods motion error")
+                    self.forceSafetyNeutral(reason: "AirPods 运动数据异常")
                     self.hasMotion = false
-                    self.statusText = "Motion error: \(error.localizedDescription)"
+                    self.statusText = "运动数据异常：\(error.localizedDescription)"
                     self.refreshAuthorizationText()
                 }
                 return
@@ -414,8 +414,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         guard isCentered, !pendingRebase else {
             isControlEngaged = false
             if !pendingRebase {
-                statusText = "Receiving AirPods motion — Set Head Center"
-                controlText = "DISARMED — Set Head Center"
+                statusText = "已收到 AirPods 运动数据，请设置头部中心"
+                controlText = "尚未启动，请设置头部中心"
             }
             return
         }
@@ -424,11 +424,11 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
             // Do not keep driving from an old target if gimbal feedback goes
             // stale. Force neutral, then rebase automatically when telemetry
             // becomes fresh again.
-            forceSafetyNeutral(reason: "Pocket 3 telemetry stale")
+            forceSafetyNeutral(reason: "Pocket 3 姿态数据已过期")
             pendingRebase = true
             isControlEngaged = false
-            statusText = "Head control paused — waiting for fresh gimbal telemetry"
-            controlText = "Paused — telemetry stale; automatic rebase pending"
+            statusText = "头追已暂停，等待最新云台姿态数据"
+            controlText = "已暂停：姿态数据已过期，等待自动重新校准"
             return
         }
 
@@ -464,17 +464,17 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
             .clamped(to: (Self.neutral - Self.controlMaxOffset)...(Self.neutral + Self.controlMaxOffset))
 
         commandText = "P=\(pitchCommand) Y=\(yawCommand)"
-        statusText = "Head centered — LIVE gimbal control"
+        statusText = "头追跟随中"
         if yawWasLimited {
             controlText = String(
-                format: "LIVE  target ΔP=%+.1f° ΔY=%+.1f°  (head yaw capped ±%.0f°)",
+                format: "跟随中 俯仰Δ=%+.1f° 水平Δ=%+.1f°（水平限制 ±%.0f°）",
                 -headPitch,
                 -headYaw,
                 Self.headYawLimitDegrees
             )
         } else {
             controlText = String(
-                format: "LIVE  target ΔP=%+.1f° ΔY=%+.1f°",
+                format: "跟随中 俯仰Δ=%+.1f° 水平Δ=%+.1f°",
                 -headPitch,
                 -headYaw
             )
@@ -497,7 +497,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     private func attemptRecenterAutoResume() {
         guard autoResumeAfterRecenter, isEnabled, hasMotion, manualOverrides.isEmpty else { return }
         guard let gimbal = telemetryProvider?() else {
-            controlText = "Paused — waiting for fresh recenter telemetry…"
+            controlText = "已暂停，等待回中后的最新姿态数据…"
             return
         }
 
@@ -527,7 +527,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
 
         guard recenterStableSamples >= Self.recenterStableSampleCount else {
             controlText = String(
-                format: "Paused — native recenter settling… %d/%d",
+                format: "已暂停，云台正在回中… %d/%d",
                 recenterStableSamples,
                 Self.recenterStableSampleCount
             )
@@ -536,8 +536,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
 
         captureCurrentPose(using: gimbal)
         resetRecenterAutoResumeState()
-        statusText = "Head tracking resumed automatically after recenter"
-        controlText = "LIVE — recenter complete; current head pose rebased"
+        statusText = "回中完成，头追已自动恢复"
+        controlText = "跟随中：已回中并以当前头部姿态重新校准"
         commandText = "P=1024 Y=1024"
         print(
             String(
@@ -553,7 +553,7 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     private func attemptPendingRebase() {
         guard pendingRebase, isEnabled, hasMotion, manualOverrides.isEmpty else { return }
         guard let gimbal = telemetryProvider?() else {
-            controlText = "Waiting for fresh telemetry to rebase…"
+            controlText = "等待最新姿态数据以重新校准…"
             return
         }
 
@@ -562,8 +562,8 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
         headCommandWasActive = false
         isControlEngaged = false
         commandText = "P=1024 Y=1024"
-        statusText = "Head tracking resumed after manual override"
-        controlText = "LIVE — rebased to current head + gimbal pose"
+        statusText = "手动接管已结束，头追已恢复"
+        controlText = "跟随中：已按当前头部和云台姿态重新校准"
         print(
             String(
                 format: "HEAD CONTROL REBASED: head P=%+.1f Ycont=%+.1f | gimbal P=%+.1f Ycont=%+.1f",
@@ -736,15 +736,15 @@ final class HeadTrackingManager: NSObject, ObservableObject, CMHeadphoneMotionMa
     private func refreshAuthorizationText() {
         switch CMHeadphoneMotionManager.authorizationStatus() {
         case .notDetermined:
-            authorizationText = "Not determined"
+            authorizationText = "尚未授权"
         case .restricted:
-            authorizationText = "Restricted"
+            authorizationText = "受系统限制"
         case .denied:
-            authorizationText = "Denied"
+            authorizationText = "未允许"
         case .authorized:
-            authorizationText = "Authorized"
+            authorizationText = "已允许"
         @unknown default:
-            authorizationText = "Unknown"
+            authorizationText = "未知"
         }
     }
 

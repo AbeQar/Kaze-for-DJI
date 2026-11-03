@@ -8,15 +8,15 @@ enum JoystickResponseMode: String, CaseIterable {
 
     var buttonTitle: String {
         switch self {
-        case .linear: return "JOYSTICK: LINEAR"
-        case .progressive: return "JOYSTICK: PROGRESSIVE"
+        case .linear: return "摇杆：线性"
+        case .progressive: return "摇杆：渐进"
         }
     }
 
     var statusText: String {
         switch self {
-        case .linear: return "Linear joystick profile"
-        case .progressive: return "Progressive joystick profile"
+        case .linear: return "线性摇杆响应"
+        case .progressive: return "渐进摇杆响应"
         }
     }
 

@@ -6,7 +6,7 @@ import NetworkExtension
 /// deliberately kept separate; ContentView coordinates Wi-Fi association before
 /// starting TCP/7001 and removes the configuration only after UDP has closed.
 final class Pocket3WiFiManager: ObservableObject {
-    @Published private(set) var status = "Not joined"
+    @Published private(set) var status = "未加入网络"
     @Published private(set) var logText = ""
     @Published private(set) var isBusy = false
     @Published private(set) var isJoined = false
@@ -25,7 +25,7 @@ final class Pocket3WiFiManager: ObservableObject {
 
     func join(ssid: String, passphrase: String, completion: @escaping (Bool) -> Void) {
         guard !ssid.isEmpty, !passphrase.isEmpty else {
-            finishJoinFailure("Pocket 3 Wi-Fi credentials are incomplete", completion: completion)
+            finishJoinFailure("Pocket 3 Wi-Fi 连接信息不完整", completion: completion)
             return
         }
 
@@ -33,7 +33,7 @@ final class Pocket3WiFiManager: ObservableObject {
         let token = generation
         isBusy = true
         isJoined = false
-        status = "Joining \(ssid)…"
+        status = "正在加入 \(ssid)…"
         log("Wi-Fi: applying app-managed configuration for \(ssid)")
 
         manager.getConfiguredSSIDs { [weak self] configuredSSIDs in
@@ -59,13 +59,13 @@ final class Pocket3WiFiManager: ObservableObject {
         guard !target.isEmpty else {
             isBusy = false
             isJoined = false
-            status = "Not joined"
+            status = "未加入网络"
             completion?()
             return
         }
 
         isBusy = true
-        status = "Leaving \(target)…"
+        status = "正在断开 \(target)…"
         log("Wi-Fi disconnect stage: removing app-managed configuration for \(target)")
         manager.removeConfiguration(forSSID: target)
         waitForDisassociation(ssid: target, token: token, attempt: 0, completion: completion)
@@ -110,7 +110,7 @@ final class Pocket3WiFiManager: ObservableObject {
 
                 if let error, !Self.isAlreadyAssociated(error) {
                     self.finishJoinFailure(
-                        "Could not join \(ssid): \(error.localizedDescription)",
+                        "无法加入 \(ssid)：\(error.localizedDescription)",
                         completion: completion
                     )
                     return
@@ -118,7 +118,7 @@ final class Pocket3WiFiManager: ObservableObject {
 
                 if let error, Self.isAlreadyAssociated(error), !wasManaged {
                     self.finishJoinFailure(
-                        "\(ssid) is joined from Settings, not owned by this app. Choose Forget This Network once, return here, and press Connect Pocket 3.",
+                        "\(ssid) 是从系统设置加入的网络。请在 Wi-Fi 设置中“忽略此网络”，再返回应用点击“连接 Pocket 3”。",
                         completion: completion
                     )
                     return
@@ -127,7 +127,7 @@ final class Pocket3WiFiManager: ObservableObject {
                 self.associatedSSID = ssid
                 self.isBusy = false
                 self.isJoined = true
-                self.status = "Joined \(ssid)"
+                self.status = "已加入 \(ssid)"
 
                 if let error, Self.isAlreadyAssociated(error) {
                     self.log("Wi-Fi: app-managed \(ssid) configuration already associated")
@@ -182,7 +182,7 @@ final class Pocket3WiFiManager: ObservableObject {
         associatedSSID = ""
         isBusy = false
         isJoined = false
-        status = "Not joined"
+        status = "未加入网络"
         if confirmed {
             log("Wi-Fi disconnect stage: \(ssid) no longer reported after configuration removal")
         } else {

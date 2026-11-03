@@ -104,7 +104,7 @@ enum Pocket3CameraSettings {
 
         var displayName: String {
             switch self {
-            case .auto: return "Auto"
+            case .auto: return "自动"
             case .iso50: return "50"
             case .iso100: return "100"
             case .iso200: return "200"
@@ -450,7 +450,7 @@ enum Pocket3CameraSettings {
     }
 
     static func proEnabled(_ enabled: Bool) -> Pocket3CameraCommand {
-        keyedParameter(pid: 0x0000, value: Data([enabled ? 0x01 : 0x00]), label: "Pro")
+        keyedParameter(pid: 0x0000, value: Data([enabled ? 0x01 : 0x00]), label: "专业模式")
     }
 
     static func exposureMode(_ mode: ExposureMode) -> Pocket3CameraCommand {
@@ -473,7 +473,7 @@ enum Pocket3CameraSettings {
         keyedParameter(
             pid: 0x000F,
             value: Data([isoMax.rawValue]),
-            label: "ISO MAX"
+            label: "ISO 上限"
         )
     }
 
@@ -530,7 +530,7 @@ enum Pocket3CameraSettings {
     }
 
     static func productShowcaseEnabled(_ enabled: Bool) -> Pocket3CameraCommand {
-        keyedParameter(pid: 0x003B, value: Data([0x01, enabled ? 0x01 : 0x00]), label: "Product Showcase")
+        keyedParameter(pid: 0x003B, value: Data([0x01, enabled ? 0x01 : 0x00]), label: "产品展示对焦")
     }
 
     /// Generic still-photo shutter trigger. One press captures once in the Pocket's current
@@ -676,7 +676,7 @@ enum Pocket3CameraSettings {
     }
 
     static func audioChannel(_ channel: AudioChannel) -> Pocket3CameraCommand {
-        keyedParameter(pid: 0x0020, value: Data([channel.rawValue]), label: "Audio Channel")
+        keyedParameter(pid: 0x0020, value: Data([channel.rawValue]), label: "声道")
     }
 
     static func keyedParameter(pid: UInt16, value: Data, label: String) -> Pocket3CameraCommand {

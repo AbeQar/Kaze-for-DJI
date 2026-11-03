@@ -62,10 +62,10 @@ final class Pocket3GimbalSession: ObservableObject {
     private static let smoothDivergenceStepDeg = 1.5
     private static let smoothDivergenceSamples = 5
 
-    @Published private(set) var status = "Not connected to Pocket 3 datalink"
+    @Published private(set) var status = "尚未连接 Pocket 3 数据链路"
     @Published private(set) var logText = ""
-    @Published private(set) var telemetryText = "04/05 telemetry: waiting"
-    @Published private(set) var centerText = "Measured center: not captured"
+    @Published private(set) var telemetryText = "等待云台姿态数据"
+    @Published private(set) var centerText = "尚未记录中心位置"
     @Published private(set) var isBusy = false
     @Published private(set) var isConnected = false
     @Published private(set) var smoothRecenterRunning = false
@@ -223,7 +223,7 @@ final class Pocket3GimbalSession: ObservableObject {
         publishBusy(true)
         publishVideoReceiving(false)
         videoOutput.reset()
-        publishStatus("Connecting to 192.168.2.1…")
+        publishStatus("正在连接相机 192.168.2.1…")
         log("=== DATALINK CONNECT ATTEMPT ===")
         transitionConnectionState(
             to: .probingPocket,
@@ -328,7 +328,7 @@ final class Pocket3GimbalSession: ObservableObject {
         publishBusy(true)
         publishSmoothRunning(false)
         publishFreshness(canCapture: false, canSmooth: false)
-        publishStatus("Disconnecting Pocket 3 datalink…")
+        publishStatus("正在断开 Pocket 3 数据连接…")
         publishVideoReceiving(false)
         // User disconnect already revoked PiP synchronously. A stale-session
         // replacement can originate off-main, so use the asynchronous reset.
@@ -417,7 +417,7 @@ final class Pocket3GimbalSession: ObservableObject {
         resetTelemetryState()
         publishConnected(false)
         publishBusy(false)
-        publishStatus("Datalink disconnected")
+        publishStatus("数据连接已断开")
         log(reason)
         transitionConnectionState(to: .disconnected, reason: reason, generation: generation)
         os_signpost(
@@ -471,7 +471,7 @@ final class Pocket3GimbalSession: ObservableObject {
                 generation: connectionGenerationSnapshot()
             )
             log("Lifecycle: app backgrounded; preserving Pocket datalink for media/PiP resume")
-            publishStatus("Backgrounded — Pocket media session")
+            publishStatus("应用在后台，相机媒体连接保持中")
         }
     }
 
@@ -513,7 +513,7 @@ final class Pocket3GimbalSession: ObservableObject {
             reason: "foregroundResume",
             generation: connectionGenerationSnapshot()
         )
-        publishStatus("Resuming Pocket 3 control…")
+        publishStatus("正在恢复 Pocket 3 控制…")
 
         let thread = Thread { [weak self] in
             self?.foregroundRecoveryWorker(
@@ -575,7 +575,7 @@ final class Pocket3GimbalSession: ObservableObject {
                     reason: "foregroundFreshProof=\(signal)",
                     generation: connectionGenerationSnapshot()
                 )
-                publishStatus("Connected — joystick ready")
+                publishStatus("已连接，摇杆已就绪")
                 return
             }
 
@@ -856,7 +856,7 @@ final class Pocket3GimbalSession: ObservableObject {
         )
         publishConnected(true)
         publishBusy(false)
-        publishStatus("Connected — joystick ready")
+        publishStatus("已连接，摇杆已就绪")
         log("Pocket 3 gimbal ready. Osmosis-style UDP registration + control pump started.")
 
         videoOutput.startSession()
@@ -1071,7 +1071,7 @@ final class Pocket3GimbalSession: ObservableObject {
         }
         if engaged {
             log("Virtual joystick engaged")
-            publishStatus("Joystick active")
+            publishStatus("摇杆控制中")
         }
     }
 
@@ -1092,7 +1092,7 @@ final class Pocket3GimbalSession: ObservableObject {
 
         if wasActive {
             log("Virtual joystick released -> neutral")
-            publishStatus("Joystick released — neutral")
+            publishStatus("摇杆已松开，控制已归零")
         }
     }
 
@@ -1123,7 +1123,7 @@ final class Pocket3GimbalSession: ObservableObject {
             log("Smooth recenter canceled: STOP / NEUTRAL")
         }
         log("Neutral requested")
-        publishStatus("Neutral / stop requested")
+        publishStatus("已发送停止指令")
     }
 
     func noteJoystickProfile(_ mode: JoystickResponseMode) {
@@ -1188,7 +1188,7 @@ final class Pocket3GimbalSession: ObservableObject {
         }
 
         log(locked ? "Gimbal LOCK requested (04/4C 00 00)" : "Gimbal FOLLOW requested (04/4C 01 00)")
-        publishStatus(locked ? "Gimbal lock requested …" : "Gimbal follow requested …")
+        publishStatus(locked ? "已请求锁定云台…" : "已请求云台跟随…")
     }
 
     /// Queue the capture-confirmed DJI Mimo internal-record command on the
@@ -1234,7 +1234,7 @@ final class Pocket3GimbalSession: ObservableObject {
 
         publishCameraRecordCommandInFlight(true)
         log(recording ? "Camera RECORD START requested (02/02 01)" : "Camera RECORD STOP requested (02/02 00)")
-        publishStatus(recording ? "Starting Pocket recording …" : "Stopping Pocket recording …")
+        publishStatus(recording ? "正在开始录像…" : "正在停止录像…")
     }
 
     /// Queue one capture-confirmed camera-setting command on the existing single-owner UDP pump.
@@ -1298,14 +1298,14 @@ final class Pocket3GimbalSession: ObservableObject {
         }
 
         log("Native recenter requested (Mimo 04/4C FE08)")
-        publishStatus("Native recenter requested …")
+        publishStatus("已请求云台回中…")
     }
 
     @discardableResult
     func captureCenter(windowMs: UInt64 = 800) -> Bool {
         guard let center = averageRecentTelemetry(windowMs: windowMs) else {
             log("CENTER CAPTURE FAILED: no fresh 04/05 samples in the last 0.8 sec")
-            publishStatus("No fresh 04/05 telemetry to capture")
+            publishStatus("尚未收到最新云台姿态，无法记录中心")
             return false
         }
 
@@ -1319,7 +1319,7 @@ final class Pocket3GimbalSession: ObservableObject {
                 center.pitchDeg, center.rollDeg, center.yawDeg, center.yawContinuousDeg
             )
         )
-        publishStatus("Measured center captured")
+        publishStatus("中心位置已记录")
         publishTelemetryAndCenter(now: nowNs(), force: true)
         return true
     }
@@ -1335,14 +1335,14 @@ final class Pocket3GimbalSession: ObservableObject {
         guard let target = capturedCenter else {
             stateLock.unlock()
             log("SMOOTH RECENTER ERROR: capture the native-recenter center first")
-            publishStatus("Capture center before smooth recenter")
+            publishStatus("请先记录中心位置，再平滑回中")
             return
         }
 
         guard let current = latestTelemetrySample else {
             stateLock.unlock()
             log("SMOOTH RECENTER ERROR: no 04/05 telemetry yet")
-            publishStatus("No telemetry for smooth recenter")
+            publishStatus("缺少云台姿态，无法平滑回中")
             return
         }
 
@@ -1350,7 +1350,7 @@ final class Pocket3GimbalSession: ObservableObject {
         guard age <= Self.smoothStaleTelemetryMs else {
             stateLock.unlock()
             log("SMOOTH RECENTER ERROR: 04/05 telemetry is stale (\(age)ms)")
-            publishStatus("Telemetry stale — smooth recenter not started")
+            publishStatus("云台姿态已过期，未启动平滑回中")
             return
         }
 
@@ -1373,7 +1373,7 @@ final class Pocket3GimbalSession: ObservableObject {
             )
         )
         publishSmoothRunning(true)
-        publishStatus("Smooth recenter running using captured center …")
+        publishStatus("正在平滑返回已记录的中心…")
     }
 
     // MARK: - Single-owner UDP pump
@@ -1872,7 +1872,7 @@ final class Pocket3GimbalSession: ObservableObject {
 
         sendGimbal(tx, pitch: Self.neutral, yaw: Self.neutral)
         publishSmoothRunning(false)
-        publishStatus(success ? "Smooth recenter complete" : "Smooth recenter aborted")
+        publishStatus(success ? "平滑回中完成" : "平滑回中已中止")
         log("Smooth recenter \(success ? "COMPLETE" : "ABORTED"): \(reason); neutral sent")
     }
 
@@ -2134,14 +2134,14 @@ final class Pocket3GimbalSession: ObservableObject {
 
         guard let sample else {
             DispatchQueue.main.async { [weak self] in
-                self?.telemetryText = "04/05 telemetry: waiting"
+                self?.telemetryText = "等待云台姿态数据"
             }
             return
         }
 
         let telemetry =
             String(
-                format: "04/05: pitch=%+.1f°  roll=%+.1f°  yaw=%+.1f°  Ycont=%+.1f°\nage=%@  mode=%@  limits: %@",
+                format: "俯仰=%+.1f° 横滚=%+.1f° 水平=%+.1f° 连续水平=%+.1f°\n数据时效=%@ 模式=%@ 限位：%@",
                 sample.pitchDeg,
                 sample.rollDeg,
                 sample.yawDeg,
@@ -2156,7 +2156,7 @@ final class Pocket3GimbalSession: ObservableObject {
             let pitchError = Self.wrappedAngleError(targetDeg: center.pitchDeg, currentDeg: sample.pitchDeg)
             let yawError = center.yawContinuousDeg - sample.yawContinuousDeg
             centerDisplay = String(
-                format: "Measured center: P=%+.1f° Y=%+.1f° Ycont=%+.1f°   current error: P=%+.1f° Y=%+.1f°",
+                format: "已记录中心：俯仰=%+.1f° 水平=%+.1f° 连续水平=%+.1f° 当前偏差：俯仰=%+.1f° 水平=%+.1f°",
                 center.pitchDeg,
                 center.yawDeg,
                 center.yawContinuousDeg,
@@ -2164,7 +2164,7 @@ final class Pocket3GimbalSession: ObservableObject {
                 yawError
             )
         } else {
-            centerDisplay = "Measured center: not captured"
+            centerDisplay = "尚未记录中心位置"
         }
 
         DispatchQueue.main.async { [weak self] in
@@ -2325,8 +2325,8 @@ final class Pocket3GimbalSession: ObservableObject {
         stateLock.unlock()
 
         DispatchQueue.main.async { [weak self] in
-            self?.telemetryText = "04/05 telemetry: waiting"
-            self?.centerText = "Measured center: not captured"
+            self?.telemetryText = "等待云台姿态数据"
+            self?.centerText = "尚未记录中心位置"
             self?.isGimbalLocked = false
             self?.cameraState = Pocket3CameraState()
             self?.cameraBatteryPercent = nil
@@ -2441,7 +2441,7 @@ final class Pocket3GimbalSession: ObservableObject {
         publishBusy(false)
         publishSmoothRunning(false)
         publishFreshness(canCapture: false, canSmooth: false)
-        publishStatus("Connection failed — see datalink log")
+        publishStatus("连接失败，请查看数据连接日志")
         DispatchQueue.main.async { [weak self] in
             self?.onTerminalConnectionFailure?(message)
         }

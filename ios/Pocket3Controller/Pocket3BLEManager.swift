@@ -8,7 +8,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
     private static let charFFF4 = CBUUID(string: "0000FFF4-0000-1000-8000-00805F9B34FB")
     private static let charFFF5 = CBUUID(string: "0000FFF5-0000-1000-8000-00805F9B34FB")
 
-    @Published private(set) var status = "Disconnected"
+    @Published private(set) var status = "未连接"
     @Published private(set) var logText = ""
     @Published private(set) var ssid = ""
     @Published private(set) var password = ""
@@ -56,7 +56,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         resetSessionState(keepLog: false)
         connectRequested = true
         isBusy = true
-        status = "Starting Bluetooth…"
+        status = "正在启动蓝牙…"
         log("Pocket3Controller v0.1 BLE credential test")
         log("BLE: using exact frozen Android v0.14.3 wake/pair/credential ordering")
 
@@ -81,7 +81,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         }
 
         resetSessionState(keepLog: true)
-        status = "Disconnected"
+        status = "未连接"
         log("BLE: disconnected by user")
     }
 
@@ -131,7 +131,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         }
 
         isBusy = true
-        status = "Scanning for Pocket 3…"
+        status = "正在搜索 Pocket 3…"
         log("BLE: scanning specifically for Osmo Pocket 3")
         central.stopScan()
         central.scanForPeripherals(
@@ -180,7 +180,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         pocketPeripheral = peripheral
         peripheral.delegate = self
         isBusy = true
-        status = "Pocket 3 found — connecting Bluetooth…"
+        status = "已找到 Pocket 3，正在连接蓝牙…"
         log("BLE: Pocket 3 found; connecting peripheral \(peripheral.identifier.uuidString)")
         central.connect(peripheral, options: nil)
     }
@@ -199,7 +199,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
     }
 
     private func handleGattReady() {
-        status = "Bluetooth ready — waking/pairing Pocket 3…"
+        status = "蓝牙已就绪，正在唤醒并配对 Pocket 3…"
 
         let wakeOK = writeCommand(Pocket3Commands.sessionPing(Pocket3Commands.sessionWake))
         log("BLE: sent 00/2B [04 00] session wake, ok=\(wakeOK)")
@@ -342,7 +342,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
                     onPaired()
 
                 case 0x02:
-                    status = "Approve pairing on the Pocket 3 screen"
+                    status = "请在 Pocket 3 屏幕上确认配对"
                     log("BLE: Pocket 3 requires pairing approval on its screen")
 
                 default:
@@ -385,7 +385,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         guard !pairedFlowStarted else { return }
         pairedFlowStarted = true
 
-        status = "Paired — waking Pocket 3 Wi-Fi…"
+        status = "配对成功，正在启动 Pocket 3 Wi-Fi…"
         log("BLE: starting Osmosis/Mimo post-pair wake + credential sequence")
         startKeepalive()
 
@@ -442,7 +442,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
         guard !credentialsReady else { return }
         credentialsReady = true
         isBusy = false
-        status = "BLE passed — Pocket 3 Wi-Fi credentials retrieved"
+        status = "蓝牙连接成功，已获取相机 Wi-Fi 信息"
         log("BLE TEST PASS: credentials complete")
         log("NEXT: app-managed Wi-Fi association for \(ssid)")
         onCredentialsReady?(ssid, password)
@@ -479,7 +479,7 @@ final class Pocket3BLEManager: NSObject, ObservableObject {
 
     private func fail(_ message: String) {
         isBusy = false
-        status = "Connection failed"
+        status = "连接失败"
         log("CONNECTION ERROR: \(message)")
     }
 
@@ -537,7 +537,7 @@ extension Pocket3BLEManager: CBCentralManagerDelegate {
             fail("Bluetooth is off. Turn it on and press CONNECT again.")
 
         case .unknown, .resetting:
-            status = "Waiting for Bluetooth…"
+            status = "正在等待蓝牙…"
 
         @unknown default:
             fail("Unknown CoreBluetooth state")
@@ -567,7 +567,7 @@ extension Pocket3BLEManager: CBCentralManagerDelegate {
             return
         }
         isConnected = true
-        status = "Bluetooth connected — discovering FFF0…"
+        status = "蓝牙已连接，正在查找相机服务…"
         log("GATT: connected; discovering service FFF0")
         peripheral.discoverServices([Self.serviceFFF0])
     }
@@ -593,12 +593,12 @@ extension Pocket3BLEManager: CBCentralManagerDelegate {
         keepaliveTimer = nil
 
         if credentialsReady {
-            status = "BLE disconnected after credentials were retrieved"
+            status = "已获取相机连接信息，蓝牙已断开"
             log("GATT: disconnected after credential retrieval (not treated as BLE test failure)")
         } else if connectRequested {
             fail("Bluetooth link disconnected before credential retrieval: \(error?.localizedDescription ?? "no error detail")")
         } else {
-            status = "Disconnected"
+            status = "未连接"
         }
     }
 }
